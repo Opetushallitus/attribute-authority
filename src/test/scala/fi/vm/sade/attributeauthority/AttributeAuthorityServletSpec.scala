@@ -57,12 +57,14 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
   private def getOid(msg: Elem) = getAttrValue(msg, "urn:oid:2.5.4.10")
 
   def hetu = post("/", postBody("010969-929N").toString.getBytes) {
+    //println(response.body)
     val msg: Elem = XML.loadString(response.body)
     (status, getOid(msg), getName(msg)) must_== (200, "1.2.246.562.24.99178889818", "Perus Pingviini")
 
   }
 
   def hetu2 = post("/", postBody("010101-123N").toString.getBytes) {
+    //println(response.body)
     val msg: Elem = XML.loadString(response.body)
     (200, getOid(msg), getName(msg)) must_== (200, "1.2.246.562.24.14229104472", "Teppo Testaaja")
   }
