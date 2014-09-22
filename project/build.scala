@@ -3,6 +3,10 @@ import Keys._
 import org.scalatra.sbt._
 import org.scalatra.sbt.PluginKeys._
 import sbtbuildinfo.Plugin._
+import com.earldouglas.xsbtwebplugin.WebPlugin
+import com.earldouglas.xsbtwebplugin.WebPlugin.container
+import com.earldouglas.xsbtwebplugin.PluginKeys._
+
 
 object AttributeAuthorityBuild extends Build {
   val Organization = "fi.vm.sade"
@@ -14,7 +18,7 @@ object AttributeAuthorityBuild extends Build {
   lazy val project = Project (
     "attribute-authority",
     file("."),
-    settings = ScalatraPlugin.scalatraWithJRebel ++ buildInfoSettings ++ Seq(
+    settings = ScalatraPlugin.scalatraWithJRebel ++ WebPlugin.webSettings ++ buildInfoSettings ++ Seq(
       organization := Organization,
       name := Name,
       version := Version,
@@ -35,7 +39,10 @@ object AttributeAuthorityBuild extends Build {
         "org.eclipse.jetty" % "jetty-webapp" % "9.1.3.v20140225" % "container",
         "org.eclipse.jetty" % "jetty-plus" % "9.1.3.v20140225" % "container",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
-      )/*,
+      ),
+      artifactPath in (Compile, packageWar) ~= { defaultPath =>
+        file("target") / defaultPath.getName
+      }/*,
       scalateTemplateConfig in Compile <<= (sourceDirectory in Compile){ base =>
         Seq(
           TemplateConfig(
