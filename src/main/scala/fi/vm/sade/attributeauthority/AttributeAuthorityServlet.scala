@@ -121,5 +121,10 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
       </body>
     </html>
   }
-  
+
+  get("/buildversion.txt") {
+    s"""name=${BuildInfo.name}
+       |version=${BuildInfo.version}
+     """.stripMargin
+  }
 }

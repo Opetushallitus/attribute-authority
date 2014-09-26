@@ -5,11 +5,13 @@ import scala.xml.{Elem, XML}
 
 // For more on Specs2, see http://etorreborre.github.com/specs2/guide/org.specs2.guide.QuickStart.html
 class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
-  "GET / on AttributeAuthorityServlet"                         ^ br ^
-  t ^ "should return status 200"                               ! root200 ^ br ^
-  bt ^ bt ^ "POST / on AttributeAuthorityServlet"                    ^ br ^
-  t ^ "should return proper SAML message"                      ! hetu ^ br ^
-  "should return proper SAML message for other hetu"       ! hetu2 ^ br ^
+  "GET / on AttributeAuthorityServlet"                           ^ br ^
+  t ^ "should return status 200"                                 ! root200 ^ br ^
+  bt ^ bt ^ "POST / on AttributeAuthorityServlet"                ^ br ^
+  t ^ "should return proper SAML message"                        ! hetu ^ br ^
+  "should return proper SAML message for other hetu"             ! hetu2 ^ br ^
+  bt ^ bt ^ "GET /buildversion.txt on AttributeAuthorityServlet" ^ br ^
+  "should return proper version"                                 ! version ^ br ^
   end
 
   addServlet(new AttributeAuthorityServlet, "/*")
@@ -67,5 +69,18 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
     //println(response.body)
     val msg: Elem = XML.loadString(response.body)
     (200, getOid(msg), getName(msg)) must_== (200, "1.2.246.562.24.14229104472", "Teppo Testaaja")
+  }
+
+  def getVersion(buildinfo: String): String = {
+    (for {
+      x <- buildinfo.split("\n") if x.startsWith("version=")
+    } yield x.split("=")(1)) match {
+      case Array(x) => x
+      case _ => ""
+    }
+  }
+
+  def version = get("/buildversion.txt") {
+    getVersion(response.body.trim) must_== BuildInfo.version
   }
 }

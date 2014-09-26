@@ -10,7 +10,7 @@ import com.earldouglas.xsbtwebplugin.PluginKeys._
 
 object AttributeAuthorityBuild extends Build {
   val Organization = "fi.vm.sade"
-  val Name = "Attribute Authority"
+  val Name = "attributeauthority"
   val Version = "0.1.0-SNAPSHOT"
   val ScalaVersion = "2.11.1"
   val ScalatraVersion = "2.3.0"
@@ -40,6 +40,14 @@ object AttributeAuthorityBuild extends Build {
         "org.eclipse.jetty" % "jetty-plus" % "9.1.3.v20140225" % "container",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
       ),
+      artifactName <<= (name in (Compile, packageWar)) { projectName =>
+        (config: ScalaVersion, module: ModuleID, artifact: Artifact) =>
+          var newName = projectName
+          if (module.revision.nonEmpty) {
+            newName += "-" + module.revision
+          }
+          newName + "." + artifact.extension
+      },
       artifactPath in (Compile, packageWar) ~= { defaultPath =>
         file("target") / defaultPath.getName
       }/*,
