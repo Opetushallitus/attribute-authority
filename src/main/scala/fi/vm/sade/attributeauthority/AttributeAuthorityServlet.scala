@@ -100,7 +100,7 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
     }
   }
 
-  post("/", operation(postOidSwagger)) {
+  post("/hetuToOid", operation(postOidSwagger)) {
     val msg = XML.loadString(request.body)
     val hetu = getHetu(msg)
     appConfig.authenticationInfoService.getHenkiloByHetu(hetu) match {
@@ -115,6 +115,7 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
   }
 
   get("/") {
+    contentType = "text/html"
     <html>
       <body>
         <h1>Attribute Authority Service</h1>
@@ -123,6 +124,7 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
   }
 
   get("/buildversion.txt") {
+    contentType = "text/plain"
     s"""name=${BuildInfo.name}
        |version=${BuildInfo.version}
      """.stripMargin

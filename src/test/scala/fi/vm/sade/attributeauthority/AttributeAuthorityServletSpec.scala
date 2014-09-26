@@ -7,7 +7,7 @@ import scala.xml.{Elem, XML}
 class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
   "GET / on AttributeAuthorityServlet"                           ^ br ^
   t ^ "should return status 200"                                 ! root200 ^ br ^
-  bt ^ bt ^ "POST / on AttributeAuthorityServlet"                ^ br ^
+  bt ^ bt ^ "POST /hetuToOid on AttributeAuthorityServlet"       ^ br ^
   t ^ "should return proper SAML message"                        ! hetu ^ br ^
   "should return proper SAML message for other hetu"             ! hetu2 ^ br ^
   bt ^ bt ^ "GET /buildversion.txt on AttributeAuthorityServlet" ^ br ^
@@ -58,14 +58,14 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
   private def getName(msg: Elem) = getAttrValue(msg, "urn:oid:2.16.840.1.113730.3.1.241")
   private def getOid(msg: Elem) = getAttrValue(msg, "urn:oid:2.5.4.10")
 
-  def hetu = post("/", postBody("010969-929N").toString.getBytes) {
+  def hetu = post("/hetuToOid", postBody("010969-929N").toString.getBytes) {
     //println(response.body)
     val msg: Elem = XML.loadString(response.body)
     (status, getOid(msg), getName(msg)) must_== (200, "1.2.246.562.24.99178889818", "Perus Pingviini")
 
   }
 
-  def hetu2 = post("/", postBody("010101-123N").toString.getBytes) {
+  def hetu2 = post("/hetuToOid", postBody("010101-123N").toString.getBytes) {
     //println(response.body)
     val msg: Elem = XML.loadString(response.body)
     (200, getOid(msg), getName(msg)) must_== (200, "1.2.246.562.24.14229104472", "Teppo Testaaja")
