@@ -59,9 +59,7 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
                              InResponseTo={ rid }
                              IssueInstant={ currentTime }
                              Version="2.0">
-              <saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">
-                { appConfig.saml2IssuerUrl }
-              </saml2:Issuer>
+              <saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">{ appConfig.saml2IssuerUrl }</saml2:Issuer>
               <saml2p:Status>
                 <saml2p:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>
               </saml2p:Status>
@@ -70,20 +68,15 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
                 <saml2:Subject>
                   <saml2:NameID>{ appConfig.saml2NameID }</saml2:NameID>
                   <saml2:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:sender-vouches">
-                    <saml2:SubjectConfirmationData Address="178.217.129.16" InResponseTo={ rid }
-                                                   NotOnOrAfter={ futureTime }/>
+                    <saml2:SubjectConfirmationData Address="178.217.129.16" InResponseTo={ rid } NotOnOrAfter={ futureTime }/>
                   </saml2:SubjectConfirmation>
                 </saml2:Subject>
                 <saml2:AttributeStatement>
                   <saml2:Attribute FriendlyName="oid" Name="urn:oid:2.16.840.1.113730.3.1.241" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
-                    <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">
-                      { user.name }
-                    </saml2:AttributeValue>
+                    <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">{ user.name }</saml2:AttributeValue>
                   </saml2:Attribute>
                   <saml2:Attribute FriendlyName="oid" Name="urn:oid:2.5.4.10" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
-                    <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">
-                      { user.oid }
-                    </saml2:AttributeValue>
+                    <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">{ user.oid }</saml2:AttributeValue>
                   </saml2:Attribute>
                 </saml2:AttributeStatement>
               </saml2:Assertion>
