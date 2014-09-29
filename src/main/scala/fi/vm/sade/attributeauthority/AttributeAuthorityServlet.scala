@@ -3,7 +3,7 @@ package fi.vm.sade.attributeauthority
 import org.scalatra.swagger.{ApiInfo, Swagger, _}
 import scala.xml.{Elem, XML}
 import java.text.SimpleDateFormat
-import java.util.{TimeZone, Calendar}
+import java.util.{TimeZone, Calendar, Date}
 
 class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val swagger: Swagger) extends AttributeAuthorityStack with SwaggerSupport {
 
@@ -40,8 +40,12 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
   private def newUUID = java.util.UUID.randomUUID.toString
 
   private def getISODate(secondsToAdd: Int = 0) = {
-    val dt = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+    val dt = Calendar.getInstance()
+    val tz = dt.getTimeZone()
+    var offs = tz.getRawOffset()
+    if (tz.inDaylightTime(new Date())) offs += tz.getDSTSavings()
     dt.add(Calendar.SECOND, secondsToAdd)
+    dt.add(Calendar.MILLISECOND, -offs)
     dateFmt.format(dt.getTime)
   }
 
