@@ -12,7 +12,7 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
   protected val dateFmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
   before() {
-    contentType = "application/xml"
+    contentType = "text/xml"
   }
 
   val postOidSwagger = (apiOperation[String]("postOid")
