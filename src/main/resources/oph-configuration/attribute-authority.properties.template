@@ -1,4 +1,4 @@
-attributeauthority.saml2_issuer_url=https://{{host_virkailija}}/attribute-authority/hetuToOid
+attributeauthority.saml2_issuer_url=https://{{host_virkailija}}/attributeauthority/hetuToOid
 attributeauthority.saml2_name_id=Oidresolver
 attributeauthority.saml2_response_validity_time_seconds=3600
 attributeauthority.henkilohallinta_url=https://{{host_virkailija}}/authentication-service/resources/s2s/byHetu/

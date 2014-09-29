@@ -66,7 +66,7 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
                 <saml2p:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>
               </saml2p:Status>
               <saml2:Assertion xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" ID={ uuid2 } IssueInstant={ currentTime } Version="2.0">
-                <saml2:Issuer Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">https://testi.virkailija.opintopolku.fi/oidresolver</saml2:Issuer>
+                <saml2:Issuer Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">{ appConfig.saml2IssuerUrl }</saml2:Issuer>
                 <saml2:Subject>
                   <saml2:NameID>{ appConfig.saml2NameID }</saml2:NameID>
                   <saml2:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:sender-vouches">
