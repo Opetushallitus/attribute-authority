@@ -1,5 +1,6 @@
 package fi.vm.sade.attributeauthority
 
+import com.fasterxml.jackson.core.JsonParseException
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
@@ -8,19 +9,27 @@ import org.json4s.jackson.JsonMethods._
  */
 
 case class UserInfo(private val jsonData: String) {
-  val (oid, name) = (for {
-    JObject(child) <- parse(jsonData)
-    JField("oidHenkilo", JString(oid)) <- child
-    JField("kutsumanimi", JString(fname)) <- child
-    JField("sukunimi", JString(sname)) <- child
-  } yield List(oid, fname, sname)) match {
-    case List(l) => {
-      l match {
-        case List(oid, fname, sname) => (oid, fname + " " + sname)
+  val (oid, name) = parseData
+
+  def parseData = {
+    try {
+      (for {
+        JObject(child) <- parse(jsonData)
+        JField("oidHenkilo", JString(oid)) <- child
+        JField("kutsumanimi", JString(fname)) <- child
+        JField("sukunimi", JString(sname)) <- child
+      } yield List(oid, fname, sname)) match {
+        case List(l) => {
+          l match {
+            case List(oid, fname, sname) => (oid, fname + " " + sname)
+            case _ => (None, None)
+          }
+        }
         case _ => (None, None)
       }
+    } catch {
+      case _: JsonParseException => (None, None)
     }
-    case _ => (None, None)
   }
 }
 
@@ -55,7 +64,7 @@ class RemoteAuthenticationInfoService(config: RemoteApplicationConfig) extends A
       case _ => Some(UserInfo(resultString))
     }
   }
-  }
+}
 
 trait AuthenticationInfoService {
   def getHenkiloByHetu(hetu : String) : Option[UserInfo]

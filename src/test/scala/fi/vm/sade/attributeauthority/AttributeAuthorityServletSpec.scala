@@ -1,5 +1,6 @@
 package fi.vm.sade.attributeauthority
 
+import org.omg.PortableServer.IdAssignmentPolicyValue
 import org.scalatra.test.specs2._
 import scala.xml.{Elem, XML}
 
@@ -11,7 +12,10 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
   t ^ "should return proper SAML message"                        ! hetu ^ br ^
   "should return proper SAML message for other hetu"             ! hetu2 ^ br ^
   bt ^ bt ^ "GET /buildversion.txt on AttributeAuthorityServlet" ^ br ^
-  "should return proper version"                                 ! version ^ br ^
+  t ^ "should return proper version"                             ! version ^ br ^
+  bt ^ bt ^ "UserInfo"                                           ^ br ^
+  t ^ "parses JSON correctly"                                    ! userInfo ^ br ^
+  t ^ "deals with bad input"                                     ! userInfoBadInput ^ br ^
   end
 
   addServlet(new AttributeAuthorityServlet, "/*")
@@ -57,6 +61,21 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
 
   private def getName(msg: Elem) = getAttrValue(msg, "urn:oid:2.16.840.1.113730.3.1.241")
   private def getOid(msg: Elem) = getAttrValue(msg, "urn:oid:2.5.4.10")
+
+  def userInfo = {
+    (TestFixture.persons.get("010101-123N") match {
+      case Some(info) => {
+        val u = UserInfo(info)
+        (u.oid, u.name)
+      }
+      case _ => (None, None)
+    }) must_== ("1.2.246.562.24.14229104472", "Teppo Testaaja")
+  }
+
+  def userInfoBadInput = {
+    val bad = UserInfo("bad input")
+    (bad.oid, bad.name) must_== (None, None)
+  }
 
   def hetu = post("/hetuToOid", postBody("010969-929N").toString.getBytes) {
     //println(response.body)
