@@ -40,10 +40,9 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
   private def newUUID = java.util.UUID.randomUUID.toString
 
   private def getISODate(secondsToAdd: Int = 0) = {
-    val dt = Calendar.getInstance()
-    val tz = dt.getTimeZone()
-    var offs = tz.getRawOffset()
-    if (tz.inDaylightTime(new Date())) offs += tz.getDSTSavings()
+    val dt = Calendar.getInstance
+    val tz = dt.getTimeZone
+    val offs = tz.getRawOffset + (if (tz.inDaylightTime(new Date())) tz.getDSTSavings else 0)
     dt.add(Calendar.SECOND, secondsToAdd)
     dt.add(Calendar.MILLISECOND, -offs)
     dateFmt.format(dt.getTime)
