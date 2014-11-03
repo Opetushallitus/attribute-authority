@@ -9,8 +9,6 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
 
   protected val applicationDescription = "API jolla mapataan HETU OID:ksi"
 
-  protected val dateFmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
-
   before() {
     contentType = "text/xml"
   }
@@ -40,6 +38,7 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
   private def newUUID = java.util.UUID.randomUUID.toString
 
   private def getISODate(secondsToAdd: Int = 0) = {
+    val dateFmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
     val dt = Calendar.getInstance
     val tz = dt.getTimeZone
     val offs = tz.getRawOffset + (if (tz.inDaylightTime(new Date())) tz.getDSTSavings else 0)
