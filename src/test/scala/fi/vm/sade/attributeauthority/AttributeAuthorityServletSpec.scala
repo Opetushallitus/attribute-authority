@@ -16,7 +16,7 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
   t ^ "should return proper version"                             ! version ^ br ^
   bt ^ bt ^ "UserInfo"                                           ^ br ^
   t ^ "parses JSON correctly"                                    ! userInfo ^ br ^
-  t ^ "deals with bad input"                                     ! userInfoBadInput ^ br ^
+  "deals with bad input"                                         ! userInfoBadInput ^ br ^
   end
 
   addServlet(new AttributeAuthorityServlet, "/*")
@@ -88,11 +88,10 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
 
   def hetu2 = post("/hetuToOid", postBody("010101-123N")) {
     val msg: Elem = XML.loadString(response.body)
-    (200, getOid(msg), getName(msg)) must_== (200, "1.2.246.562.24.14229104472", "Teppo Testaaja")
+    (status, getOid(msg), getName(msg)) must_== (200, "1.2.246.562.24.14229104472", "Teppo Testaaja")
   }
 
   def nonExistingHetu = post("/hetuToOid", postBody("111111-123N")) {
-    println(response.body)
     val msg: Elem = XML.loadString(response.body)
     (msg \\ "Status" \ "StatusCode" \ "@Value").text must_== "urn:oasis:names:tc:SAML:2.0:status:Responder"
   }

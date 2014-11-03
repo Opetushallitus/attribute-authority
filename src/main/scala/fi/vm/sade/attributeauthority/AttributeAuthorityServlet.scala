@@ -1,11 +1,12 @@
 package fi.vm.sade.attributeauthority
 
+import org.scalatra.ScalatraServlet
 import org.scalatra.swagger.{ApiInfo, Swagger, _}
 import scala.xml.{Elem, XML}
 import java.text.SimpleDateFormat
 import java.util.{TimeZone, Calendar, Date}
 
-class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val swagger: Swagger) extends AttributeAuthorityStack with SwaggerSupport {
+class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val swagger: Swagger) extends ScalatraServlet with SwaggerSupport {
 
   protected val applicationDescription = "API jolla mapataan HETU OID:ksi"
 
