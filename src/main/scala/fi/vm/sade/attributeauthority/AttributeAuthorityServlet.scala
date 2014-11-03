@@ -95,6 +95,22 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
     }
   }
 
+  private def makeSamlErrorResponse = {
+    val uuid = newUUID
+    val currentTime = getISODate()
+    <soap11:Envelope xmlns:soap11="http://schemas.xmlsoap.org/soap/envelope/">
+      <soap11:Body>
+        <saml2p:Response xmlns:saml2p="urn:oasis:names:tc:SAML:2.0:protocol" ID={ uuid } IssueInstant={ currentTime } Version="2.0">
+          <saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">https://idp.2ndtry.mobi/idp/shibboleth</saml2:Issuer>
+          <saml2p:Status>
+            <saml2p:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Responder"/>
+            <saml2p:StatusMessage>Error decoding attribute query message</saml2p:StatusMessage>
+          </saml2p:Status>
+        </saml2p:Response>
+      </soap11:Body>
+    </soap11:Envelope>
+  }
+
   post("/hetuToOid", operation(postOidSwagger)) {
     val msg = XML.loadString(request.body)
     val hetu = getHetu(msg)
@@ -105,7 +121,7 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
           case _ => halt(status = 500)
         }
       }
-      case _ => halt(status = 404)
+      case _ => makeSamlErrorResponse
     }
   }
 

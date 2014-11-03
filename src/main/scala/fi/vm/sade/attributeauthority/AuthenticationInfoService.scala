@@ -8,10 +8,10 @@ import org.json4s.jackson.JsonMethods._
  *
  */
 
-case class UserInfo(private val jsonData: String) {
-  val (oid, name) = parseData
+case class UserInfo(val oid: String, val name: String)
 
-  def parseData = {
+object UserInfo {
+  def fromJson(jsonData: String): Option[UserInfo] = {
     try {
       (for {
         JObject(child) <- parse(jsonData)
@@ -21,14 +21,14 @@ case class UserInfo(private val jsonData: String) {
       } yield List(oid, fname, sname)) match {
         case List(l) => {
           l match {
-            case List(oid, fname, sname) => (oid, fname + " " + sname)
-            case _ => (None, None)
+            case List(oid, fname, sname) => Some(UserInfo(oid, fname + " " + sname))
+            case _ => None
           }
         }
-        case _ => (None, None)
+        case _ => None
       }
     } catch {
-      case _: JsonParseException => (None, None)
+      case _: JsonParseException => None
     }
   }
 }
@@ -36,7 +36,7 @@ case class UserInfo(private val jsonData: String) {
 class MockAuthenticationInfoService extends AuthenticationInfoService {
   def getHenkiloByHetu(hetu: String): Option[UserInfo] = {
     TestFixture.persons.get(hetu) match {
-      case Some(user) => Some(UserInfo(user))
+      case Some(user) => UserInfo.fromJson(user)
       case _ => None
     }
   }
@@ -61,7 +61,7 @@ class RemoteAuthenticationInfoService(config: RemoteApplicationConfig) extends A
 
     responseCode match {
       case 404 => None
-      case _ => Some(UserInfo(resultString))
+      case _ => UserInfo.fromJson(resultString)
     }
   }
 }

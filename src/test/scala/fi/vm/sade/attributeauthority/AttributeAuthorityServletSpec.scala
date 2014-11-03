@@ -11,6 +11,7 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
   bt ^ bt ^ "POST /hetuToOid on AttributeAuthorityServlet"       ^ br ^
   t ^ "should return proper SAML message"                        ! hetu ^ br ^
   "should return proper SAML message for other hetu"             ! hetu2 ^ br ^
+  "should return proper SAML message for misssing hetu"          ! nonExistingHetu ^ br ^
   bt ^ bt ^ "GET /buildversion.txt on AttributeAuthorityServlet" ^ br ^
   t ^ "should return proper version"                             ! version ^ br ^
   bt ^ bt ^ "UserInfo"                                           ^ br ^
@@ -47,7 +48,7 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
       Name="urn:oid:1.3.6.1.4.1.1466.115.121.1.26"
       FriendlyName="mail">
       </saml:Attribute>
-    </samlp:AttributeQuery>
+    </samlp:AttributeQuery>.toString.getBytes
 
   private def getAttrValue(msg: Elem, name: String) = {
     (for {
@@ -65,29 +66,35 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
   def userInfo = {
     (TestFixture.persons.get("010101-123N") match {
       case Some(info) => {
-        val u = UserInfo(info)
-        (u.oid, u.name)
+        UserInfo.fromJson(info) match {
+          case Some(u) => (u.oid, u.name)
+          case _ =>
+        }
       }
-      case _ => (None, None)
+      case _ =>
     }) must_== ("1.2.246.562.24.14229104472", "Teppo Testaaja")
   }
 
   def userInfoBadInput = {
-    val bad = UserInfo("bad input")
-    (bad.oid, bad.name) must_== (None, None)
+    val bad = UserInfo.fromJson("bad input")
+    bad must_== None
   }
 
-  def hetu = post("/hetuToOid", postBody("010969-929N").toString.getBytes) {
-    //println(response.body)
+  def hetu = post("/hetuToOid", postBody("010969-929N")) {
     val msg: Elem = XML.loadString(response.body)
     (status, getOid(msg), getName(msg)) must_== (200, "1.2.246.562.24.99178889818", "Perus Pingviini")
 
   }
 
-  def hetu2 = post("/hetuToOid", postBody("010101-123N").toString.getBytes) {
-    //println(response.body)
+  def hetu2 = post("/hetuToOid", postBody("010101-123N")) {
     val msg: Elem = XML.loadString(response.body)
     (200, getOid(msg), getName(msg)) must_== (200, "1.2.246.562.24.14229104472", "Teppo Testaaja")
+  }
+
+  def nonExistingHetu = post("/hetuToOid", postBody("111111-123N")) {
+    println(response.body)
+    val msg: Elem = XML.loadString(response.body)
+    (msg \\ "Status" \ "StatusCode" \ "@Value").text must_== "urn:oasis:names:tc:SAML:2.0:status:Responder"
   }
 
   def getVersion(buildinfo: String): String = {
