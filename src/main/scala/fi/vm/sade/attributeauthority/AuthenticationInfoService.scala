@@ -1,34 +1,30 @@
 package fi.vm.sade.attributeauthority
 
 import com.fasterxml.jackson.core.JsonParseException
+import org.json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 
-/**
- *
- */
-
-case class UserInfo(val oid: String, val name: String)
+case class UserInfo(oid: String, name: String)
 
 object UserInfo {
+  implicit val formats: Formats = DefaultFormats
+
   def fromJson(jsonData: String): Option[UserInfo] = {
+    for {
+      obj <- parseJson(jsonData)
+      oid = (obj \ "oidHenkilo").extract[String]
+      fname = (obj \ "kutsumanimi").extract[String]
+      sname = (obj \ "sukunimi").extract[String]
+    } yield UserInfo(oid, fname + " " + sname)
+  }
+
+  def parseJson(jsonData: String): Option[json4s.JValue] = {
     try {
-      (for {
-        JObject(child) <- parse(jsonData)
-        JField("oidHenkilo", JString(oid)) <- child
-        JField("kutsumanimi", JString(fname)) <- child
-        JField("sukunimi", JString(sname)) <- child
-      } yield List(oid, fname, sname)) match {
-        case List(l) => {
-          l match {
-            case List(oid, fname, sname) => Some(UserInfo(oid, fname + " " + sname))
-            case _ => None
-          }
-        }
-        case _ => None
-      }
-    } catch {
-      case _: JsonParseException => None
+      Some(parse(jsonData))
+    }
+    catch {
+      case _ : JsonParseException => None
     }
   }
 }
@@ -44,7 +40,7 @@ class MockAuthenticationInfoService extends AuthenticationInfoService {
 
 class RemoteAuthenticationInfoService(config: RemoteApplicationConfig) extends AuthenticationInfoService {
 
-  def getHenkiloByHetu(hetu : String) : Option[UserInfo] = {
+  def getHenkiloByHetu(hetu: String): Option[UserInfo] = {
     CASClient(DefaultHttpClient).getServiceTicket(config) match {
       case None => None
       case Some(ticket) => getHenkilo(hetu, ticket)
@@ -64,5 +60,5 @@ class RemoteAuthenticationInfoService(config: RemoteApplicationConfig) extends A
 }
 
 trait AuthenticationInfoService {
-  def getHenkiloByHetu(hetu : String) : Option[UserInfo]
+  def getHenkiloByHetu(hetu: String): Option[UserInfo]
 }
