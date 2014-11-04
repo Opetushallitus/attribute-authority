@@ -2,7 +2,7 @@ package fi.vm.sade.attributeauthority
 
 import java.io.File
 
-import com.typesafe.config.{Config, ConfigException, ConfigFactory}
+import com.typesafe.config.{ConfigException, ConfigFactory}
 
 
 /**

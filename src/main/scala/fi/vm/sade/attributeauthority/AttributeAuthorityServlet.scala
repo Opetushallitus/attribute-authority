@@ -5,7 +5,7 @@ import org.joda.time.format.ISODateTimeFormat
 import org.scalatra.ScalatraServlet
 import org.scalatra.swagger.{Swagger, _}
 
-import scala.xml.{SAXParseException, Elem, XML}
+import scala.xml.{Elem, XML}
 
 class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val swagger: Swagger) extends ScalatraServlet with SwaggerSupport {
 
