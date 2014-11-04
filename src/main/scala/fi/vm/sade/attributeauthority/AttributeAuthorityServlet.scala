@@ -1,10 +1,11 @@
 package fi.vm.sade.attributeauthority
 
+import org.joda.time.DateTime
+import org.joda.time.format.ISODateTimeFormat
 import org.scalatra.ScalatraServlet
-import org.scalatra.swagger.{ApiInfo, Swagger, _}
+import org.scalatra.swagger.{Swagger, _}
+
 import scala.xml.{Elem, XML}
-import java.text.SimpleDateFormat
-import java.util.{TimeZone, Calendar, Date}
 
 class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val swagger: Swagger) extends ScalatraServlet with SwaggerSupport {
 
@@ -39,13 +40,8 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
   private def newUUID = java.util.UUID.randomUUID.toString
 
   private def getISODate(secondsToAdd: Int = 0) = {
-    val dateFmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
-    val dt = Calendar.getInstance
-    val tz = dt.getTimeZone
-    val offs = tz.getRawOffset + (if (tz.inDaylightTime(new Date())) tz.getDSTSavings else 0)
-    dt.add(Calendar.SECOND, secondsToAdd)
-    dt.add(Calendar.MILLISECOND, -offs)
-    dateFmt.format(dt.getTime)
+    val fmt = ISODateTimeFormat.dateTimeNoMillis.withZoneUTC
+    DateTime.now.withDurationAdded(secondsToAdd, 1000).toString(fmt)
   }
 
   private def makeSamlResponse(user: UserInfo, rid: String) = {
