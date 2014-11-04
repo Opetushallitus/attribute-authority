@@ -1,5 +1,4 @@
 <configuration>
-{% raw %}
   <appender name="FILE" class="ch.qos.logback.core.RollingFileAppender">
     <encoder>
       <pattern>%d{ISO8601} %-5p [%t] %-5p %c: %m%n</pattern>
@@ -15,9 +14,8 @@
         <maxFileSize>20MB</maxFileSize>
       </triggeringPolicy>
   </appender>
-{% endraw %}
 
-  <root level="{{env_loglevel}}">
+  <root level="info">
     <appender-ref ref="FILE" />
   </root>
 </configuration>
