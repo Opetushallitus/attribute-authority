@@ -46,10 +46,7 @@ class RemoteAuthenticationInfoService(config: RemoteApplicationConfig) extends A
 
   def getHenkiloByHetu(hetu : String) : Option[UserInfo] = {
     CASClient(DefaultHttpClient).getServiceTicket(config) match {
-      case None => {
-        println("failed getting service ticket")
-        None
-      }
+      case None => None
       case Some(ticket) => getHenkilo(hetu, ticket)
     }
   }
@@ -60,8 +57,8 @@ class RemoteAuthenticationInfoService(config: RemoteApplicationConfig) extends A
       .responseWithHeaders
 
     responseCode match {
-      case 404 => None
-      case _ => UserInfo.fromJson(resultString)
+      case 200 => UserInfo.fromJson(resultString)
+      case _ => None
     }
   }
 }

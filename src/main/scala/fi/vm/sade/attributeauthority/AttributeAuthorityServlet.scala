@@ -1,5 +1,6 @@
 package fi.vm.sade.attributeauthority
 
+import fi.vm.sade.attributeauthority.util.Logging
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.scalatra.ScalatraServlet
@@ -7,7 +8,7 @@ import org.scalatra.swagger.{Swagger, _}
 
 import scala.xml.{Elem, XML}
 
-class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val swagger: Swagger) extends ScalatraServlet with SwaggerSupport {
+class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val swagger: Swagger) extends ScalatraServlet with SwaggerSupport with Logging {
 
   protected val applicationDescription = "API jolla mapataan HETU OID:ksi"
 
@@ -44,8 +45,8 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
     DateTime.now.withDurationAdded(secondsToAdd, 1000).toString(fmt)
   }
 
-  private def samlResponse(user: UserInfo, rid: String) = {
-    try {
+  private def samlResponse(user: UserInfo, rid: String): Option[Elem] = {
+    withWarnLogging[Option[Elem]] {
       val uuid1 = newUUID
       val uuid2 = newUUID
       val currentTime = getISODate()
@@ -83,13 +84,7 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
           </soap11:Body>
         </soap11:Envelope>
       )
-    }
-    catch {
-      case e: Exception => {
-        e.printStackTrace()
-        None
-      }
-    }
+    }("Creating SAML2 response failed", None)
   }
 
   private def samlErrorResponse(statusCode: String, statusMessage: String) = {
@@ -131,7 +126,9 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
             case Some(user) => {
               samlResponse(user, getMsgId(msg)) match {
                 case Some(reply) => reply
-                case _ => halt(status = 500, body = soapFaultMessage("soap11:Server", "Internal error"))
+                case _ => {
+                  halt(status = 500, body = soapFaultMessage("soap11:Server", "Internal error"))
+                }
               }
             }
             case _ => samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Responder", "No user found by hetu")

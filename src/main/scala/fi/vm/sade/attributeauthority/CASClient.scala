@@ -1,6 +1,8 @@
 package fi.vm.sade.attributeauthority
 
-case class CASClient(val httpClient: HttpClient) {
+import fi.vm.sade.attributeauthority.util.Logging
+
+case class CASClient(val httpClient: HttpClient) extends Logging {
 
   protected def getTicketGrantingTicket(service: RemoteApplicationConfig): Option[String] = {
     val (responseCode, headersMap, resultString) = httpClient.httpPost(service.casUrl, None)
@@ -15,13 +17,14 @@ case class CASClient(val httpClient: HttpClient) {
         ticketPattern.findFirstMatchIn(headerValue) match {
           case Some(matched) => Some(matched.group(1))
           case None => {
+            logger.warn("no ticket in response")
             None
           }
         }
       }
       case _ => {
-        println("failed getting ticket granting ticket")
-        println(resultString)
+        logger.warn("failed getting ticket granting ticket")
+        logger.warn(resultString)
         None
       }
     }
