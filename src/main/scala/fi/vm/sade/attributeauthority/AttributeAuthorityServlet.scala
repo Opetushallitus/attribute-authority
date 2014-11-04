@@ -5,7 +5,7 @@ import org.joda.time.format.ISODateTimeFormat
 import org.scalatra.ScalatraServlet
 import org.scalatra.swagger.{Swagger, _}
 
-import scala.xml.{Elem, XML}
+import scala.xml.{SAXParseException, Elem, XML}
 
 class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val swagger: Swagger) extends ScalatraServlet with SwaggerSupport {
 
@@ -19,12 +19,12 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
     summary "Muutetaan HETU OIDksi"
     parameter bodyParam[String]("").description("SAML2 Attribute Query"))
 
-  private def getHetu(msg: Elem): String = {
+  private def getHetu(msg: Elem): Option[String] = {
     (for {
       item <- msg \\ "NameID" if (item \ "@Format").text == "urn:oid:1.2.246.21"
     } yield item.text) match {
-      case List(hetu) => hetu.trim
-      case _ => ""
+      case List(hetu) if !hetu.isEmpty => Some(hetu.trim)
+      case _ => None
     }
   }
 
@@ -44,7 +44,7 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
     DateTime.now.withDurationAdded(secondsToAdd, 1000).toString(fmt)
   }
 
-  private def makeSamlResponse(user: UserInfo, rid: String) = {
+  private def samlResponse(user: UserInfo, rid: String) = {
     try {
       val uuid1 = newUUID
       val uuid2 = newUUID
@@ -92,16 +92,16 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
     }
   }
 
-  private def makeSamlErrorResponse = {
+  private def samlErrorResponse(statusCode: String, statusMessage: String) = {
     val uuid = newUUID
     val currentTime = getISODate()
     <soap11:Envelope xmlns:soap11="http://schemas.xmlsoap.org/soap/envelope/">
       <soap11:Body>
         <saml2p:Response xmlns:saml2p="urn:oasis:names:tc:SAML:2.0:protocol" ID={ uuid } IssueInstant={ currentTime } Version="2.0">
-          <saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">https://idp.2ndtry.mobi/idp/shibboleth</saml2:Issuer>
+          <saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">{ appConfig.saml2IssuerUrl }</saml2:Issuer>
           <saml2p:Status>
-            <saml2p:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Responder"/>
-            <saml2p:StatusMessage>Error decoding attribute query message</saml2p:StatusMessage>
+            <saml2p:StatusCode Value={ statusCode }/>
+            <saml2p:StatusMessage>{ statusMessage }</saml2p:StatusMessage>
           </saml2p:Status>
         </saml2p:Response>
       </soap11:Body>
@@ -109,16 +109,25 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
   }
 
   post("/hetuToOid", operation(postOidSwagger)) {
-    val msg = XML.loadString(request.body)
-    val hetu = getHetu(msg)
-    appConfig.authenticationInfoService.getHenkiloByHetu(hetu) match {
-      case Some(user) => {
-        makeSamlResponse(user, getMsgId(msg)) match {
-          case Some(reply) => reply
-          case _ => halt(status = 500)
+    try {
+      val msg = XML.loadString(request.body)
+      getHetu(msg) match {
+        case Some(hetu) => {
+          appConfig.authenticationInfoService.getHenkiloByHetu(hetu) match {
+            case Some(user) => {
+              samlResponse(user, getMsgId(msg)) match {
+                case Some(reply) => reply
+                case _ => halt(status = 500)
+              }
+            }
+            case _ => samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Responder", "No user found by hetu")
+          }
         }
+        case _ => samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Requester", "No hetu found in request")
       }
-      case _ => makeSamlErrorResponse
+    }
+    catch {
+      case e: Exception => halt(status = 500)
     }
   }
 

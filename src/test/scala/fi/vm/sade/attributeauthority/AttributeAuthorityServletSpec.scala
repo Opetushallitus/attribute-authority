@@ -12,6 +12,8 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
   t ^ "should return proper SAML message"                        ! hetu ^ br ^
   "should return proper SAML message for other hetu"             ! hetu2 ^ br ^
   "should return proper SAML message for misssing hetu"          ! nonExistingHetu ^ br ^
+  "should return proper SAML message if no hetu in request"      ! hetuMissingFromRequest ^ br ^
+  "should return proper SAML message for empty request"          ! emptyRequest ^ br ^
   bt ^ bt ^ "GET /buildversion.txt on AttributeAuthorityServlet" ^ br ^
   t ^ "should return proper version"                             ! version ^ br ^
   bt ^ bt ^ "UserInfo"                                           ^ br ^
@@ -94,6 +96,15 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
   def nonExistingHetu = post("/hetuToOid", postBody("111111-123N")) {
     val msg: Elem = XML.loadString(response.body)
     (msg \\ "Status" \ "StatusCode" \ "@Value").text must_== "urn:oasis:names:tc:SAML:2.0:status:Responder"
+  }
+
+  def hetuMissingFromRequest = post("/hetuToOid", <foo></foo>.toString.getBytes) {
+    val msg: Elem = XML.loadString(response.body)
+    (msg \\ "Status" \ "StatusCode" \ "@Value").text must_== "urn:oasis:names:tc:SAML:2.0:status:Requester"
+  }
+
+  def emptyRequest = post("/hetuToOid", " ".getBytes) {
+    status must_== 500
   }
 
   def getVersion(buildinfo: String): String = {
