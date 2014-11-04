@@ -108,6 +108,20 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
     </soap11:Envelope>
   }
 
+  private def soapFaultMessage(faultCode: String, faultString: String) = {
+    <SOAP-ENV:Envelope
+        xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+        xmlns:xsi="http://www.w3.org/1999/XMLSchema-instance"
+        xmlns:xsd="http://www.w3.org/1999/XMLSchema">
+      <SOAP-ENV:Body>
+        <SOAP-ENV:Fault>
+          <faultcode>{ faultCode }</faultcode>
+          <faultstring>{ faultString }</faultstring>
+        </SOAP-ENV:Fault>
+      </SOAP-ENV:Body>
+    </SOAP-ENV:Envelope>
+  }
+
   post("/hetuToOid", operation(postOidSwagger)) {
     try {
       val msg = XML.loadString(request.body)
@@ -117,7 +131,7 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
             case Some(user) => {
               samlResponse(user, getMsgId(msg)) match {
                 case Some(reply) => reply
-                case _ => halt(status = 500)
+                case _ => halt(status = 500, body = soapFaultMessage("soap11:Server", "Internal error"))
               }
             }
             case _ => samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Responder", "No user found by hetu")
@@ -127,7 +141,7 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
       }
     }
     catch {
-      case e: Exception => halt(status = 500)
+      case e: Exception => halt(status = 500, body = soapFaultMessage("soap11:Client", "Invalid message format"))
     }
   }
 

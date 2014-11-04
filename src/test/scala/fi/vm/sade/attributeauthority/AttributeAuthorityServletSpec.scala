@@ -104,7 +104,8 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
   }
 
   def emptyRequest = post("/hetuToOid", " ".getBytes) {
-    status must_== 500
+    val msg: Elem = XML.loadString(response.body)
+    (status, (msg \\ "Fault" \ "faultcode").text) must_== (500, "soap11:Client")
   }
 
   def getVersion(buildinfo: String): String = {
