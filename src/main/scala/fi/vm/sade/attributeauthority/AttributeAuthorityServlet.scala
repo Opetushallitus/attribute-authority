@@ -6,7 +6,7 @@ import org.joda.time.format.ISODateTimeFormat
 import org.scalatra.ScalatraServlet
 import org.scalatra.swagger.{Swagger, _}
 
-import scala.xml.{Elem, XML}
+import scala.xml.{SAXParseException, Elem, XML}
 
 class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val swagger: Swagger) extends ScalatraServlet with SwaggerSupport with Logging {
 
@@ -23,18 +23,18 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
   private def getHetu(msg: Elem): Option[String] = {
     (for {
       item <- msg \\ "NameID" if (item \ "@Format").text == "urn:oid:1.2.246.21"
-    } yield item.text) match {
+    } yield item.text.trim) match {
       case List(hetu) if !hetu.isEmpty => Some(hetu.trim)
       case _ => None
     }
   }
 
-  private def getMsgId(msg: Elem): String = {
+  private def getMsgId(msg: Elem): Option[String] = {
     (for {
       idAttr <- msg \\ "AttributeQuery" \ "@ID"
-    } yield idAttr.text) match {
-      case List(id) => id.trim
-      case _ => ""
+    } yield idAttr.text.trim) match {
+      case List(id) if !id.isEmpty => Some(id.trim)
+      case _ => None
     }
   }
 
@@ -45,46 +45,44 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
     DateTime.now.withDurationAdded(secondsToAdd, 1000).toString(fmt)
   }
 
-  private def samlResponse(user: UserInfo, rid: String): Option[Elem] = {
-    withWarnLogging[Option[Elem]] {
+  private def samlResponse(user: UserInfo, rid: String): Elem = {
+    withErrorLogging {
       val uuid1 = newUUID
       val uuid2 = newUUID
       val currentTime = getISODate()
       val futureTime = getISODate(appConfig.saml2ResponseValidityTimeSeconds)
-      Some(
-        <soap11:Envelope xmlns:soap11="http://schemas.xmlsoap.org/soap/envelope/">
-          <soap11:Body>
-            <saml2p:Response xmlns:saml2p="urn:oasis:names:tc:SAML:2.0:protocol"
-                             ID={ uuid1 }
-                             InResponseTo={ rid }
-                             IssueInstant={ currentTime }
-                             Version="2.0">
-              <saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">{ appConfig.saml2IssuerUrl }</saml2:Issuer>
-              <saml2p:Status>
-                <saml2p:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>
-              </saml2p:Status>
-              <saml2:Assertion xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" ID={ uuid2 } IssueInstant={ currentTime } Version="2.0">
-                <saml2:Issuer Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">{ appConfig.saml2IssuerUrl }</saml2:Issuer>
-                <saml2:Subject>
-                  <saml2:NameID>{ appConfig.saml2NameID }</saml2:NameID>
-                  <saml2:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:sender-vouches">
-                    <saml2:SubjectConfirmationData Address="178.217.129.16" InResponseTo={ rid } NotOnOrAfter={ futureTime }/>
-                  </saml2:SubjectConfirmation>
-                </saml2:Subject>
-                <saml2:AttributeStatement>
-                  <saml2:Attribute FriendlyName="oid" Name="urn:oid:2.16.840.1.113730.3.1.241" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
-                    <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">{ user.name }</saml2:AttributeValue>
-                  </saml2:Attribute>
-                  <saml2:Attribute FriendlyName="oid" Name="urn:oid:2.5.4.10" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
-                    <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">{ user.oid }</saml2:AttributeValue>
-                  </saml2:Attribute>
-                </saml2:AttributeStatement>
-              </saml2:Assertion>
-            </saml2p:Response>
-          </soap11:Body>
-        </soap11:Envelope>
-      )
-    }("Creating SAML2 response failed", None)
+      <soap11:Envelope xmlns:soap11="http://schemas.xmlsoap.org/soap/envelope/">
+        <soap11:Body>
+          <saml2p:Response xmlns:saml2p="urn:oasis:names:tc:SAML:2.0:protocol"
+                           ID={ uuid1 }
+                           InResponseTo={ rid }
+                           IssueInstant={ currentTime }
+                           Version="2.0">
+            <saml2:Issuer xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">{ appConfig.saml2IssuerUrl }</saml2:Issuer>
+            <saml2p:Status>
+              <saml2p:StatusCode Value="urn:oasis:names:tc:SAML:2.0:status:Success"/>
+            </saml2p:Status>
+            <saml2:Assertion xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion" ID={ uuid2 } IssueInstant={ currentTime } Version="2.0">
+              <saml2:Issuer Format="urn:oasis:names:tc:SAML:2.0:nameid-format:entity">{ appConfig.saml2IssuerUrl }</saml2:Issuer>
+              <saml2:Subject>
+                <saml2:NameID>{ appConfig.saml2NameID }</saml2:NameID>
+                <saml2:SubjectConfirmation Method="urn:oasis:names:tc:SAML:2.0:cm:sender-vouches">
+                  <saml2:SubjectConfirmationData Address="178.217.129.16" InResponseTo={ rid } NotOnOrAfter={ futureTime }/>
+                </saml2:SubjectConfirmation>
+              </saml2:Subject>
+              <saml2:AttributeStatement>
+                <saml2:Attribute FriendlyName="oid" Name="urn:oid:2.16.840.1.113730.3.1.241" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+                  <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">{ user.name }</saml2:AttributeValue>
+                </saml2:Attribute>
+                <saml2:Attribute FriendlyName="oid" Name="urn:oid:2.5.4.10" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+                  <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">{ user.oid }</saml2:AttributeValue>
+                </saml2:Attribute>
+              </saml2:AttributeStatement>
+            </saml2:Assertion>
+          </saml2p:Response>
+        </soap11:Body>
+      </soap11:Envelope>
+    }("Creating SAML2 response failed")
   }
 
   private def samlErrorResponse(statusCode: String, statusMessage: String) = {
@@ -120,25 +118,19 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
   post("/hetuToOid", operation(postOidSwagger)) {
     try {
       val msg = XML.loadString(request.body)
-      getHetu(msg) match {
-        case Some(hetu) => {
-          appConfig.authenticationInfoService.getHenkiloByHetu(hetu) match {
-            case Some(user) => {
-              samlResponse(user, getMsgId(msg)) match {
-                case Some(reply) => reply
-                case _ => {
-                  halt(status = 500, body = soapFaultMessage("soap11:Server", "Internal error"))
-                }
-              }
-            }
-            case _ => samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Responder", "No user found by hetu")
-          }
+      (getHetu(msg), getMsgId(msg)) match {
+        case (Some(hetu), Some(msgid)) => appConfig.authenticationInfoService.getHenkiloByHetu(hetu) match {
+          case Some(user) => samlResponse(user, msgid)
+          case _ => samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Responder", "No user found by hetu")
         }
-        case _ => samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Requester", "No hetu found in request")
+        case (None, Some(msgid)) => samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Requester", "No hetu found in request")
+        case (Some(hetu), None) => samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Requester", "No message id found in request")
+        case (None, None) => samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Requester", "Neither message id nor hetu found in request")
       }
     }
     catch {
-      case e: Exception => halt(status = 500, body = soapFaultMessage("soap11:Client", "Invalid message format"))
+      case e: SAXParseException => halt(status = 500, body = soapFaultMessage("soap11:Client", "Invalid message format"))
+      case e: Exception => halt(status = 500, body = soapFaultMessage("soap11:Server", "Internal error"))
     }
   }
 

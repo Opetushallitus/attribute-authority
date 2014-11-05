@@ -1,22 +1,29 @@
 package fi.vm.sade.attributeauthority
 
+import org.joda.time.format.ISODateTimeFormat
+
 import scala.xml.{Elem, XML}
 
 // For more on Specs2, see http://etorreborre.github.com/specs2/guide/org.specs2.guide.QuickStart.html
-class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
-  "GET / on AttributeAuthorityServlet"                           ^ br ^
-  t ^ "should return status 200"                                 ! root200 ^ br ^
-  bt ^ bt ^ "POST /hetuToOid on AttributeAuthorityServlet"       ^ br ^
-  t ^ "should return proper SAML message"                        ! hetu ^ br ^
-  "should return proper SAML message for other hetu"             ! hetu2 ^ br ^
-  "should return proper SAML message for misssing hetu"          ! nonExistingHetu ^ br ^
-  "should return proper SAML message if no hetu in request"      ! hetuMissingFromRequest ^ br ^
-  "should return proper SAML message for empty request"          ! emptyRequest ^ br ^
-  bt ^ bt ^ "GET /buildversion.txt on AttributeAuthorityServlet" ^ br ^
-  t ^ "should return proper version"                             ! version ^ br ^
-  bt ^ bt ^ "UserInfo"                                           ^ br ^
-  t ^ "parses JSON correctly"                                    ! userInfo ^ br ^
-  "deals with bad input"                                         ! userInfoBadInput ^ br ^
+class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is = br ^
+  "GET / on AttributeAuthorityServlet"                                  ^ br ^
+  t ^ "should return status 200"                                        ! root200 ^ br ^
+  bt ^ bt ^ "POST /hetuToOid on AttributeAuthorityServlet"              ^ br ^
+  t ^ "should return proper SAML message"                               ! hetu ^ br ^
+  "should return proper SAML message for other hetu"                    ! hetu2 ^ br ^
+  "should return proper SAML message for misssing hetu"                 ! nonExistingHetu ^ br ^
+  "should return proper SAML message if no hetu in request"             ! hetuMissingFromRequest ^ br ^
+  "should return proper SAML message if no id in request"               ! idMissingFromRequest ^ br ^
+  "should return proper SAML message if neither heto nor id in request" ! idMissingFromRequest ^ br ^
+  "should return proper SAML message for empty request"                 ! emptyRequest ^ br ^
+  "SAML message has proper Issuer URL"                                  ! properIssuerUrl ^ br ^
+  "SAML message has proper IssueInstant"                                ! properIssueInstant ^ br ^
+  "SAML message has proper NotOnOrAfter"                                ! properNotOnOrAfter ^ br ^
+  bt ^ bt ^ "GET /buildversion.txt on AttributeAuthorityServlet"        ^ br ^
+  t ^ "should return proper version"                                    ! version ^ br ^
+  bt ^ bt ^ "UserInfo"                                                  ^ br ^
+  t ^ "parses JSON correctly"                                           ! userInfo ^ br ^
+  "deals with bad input"                                                ! userInfoBadInput ^ br ^
   end
 
   addServlet(new AttributeAuthorityServlet, "/*")
@@ -25,10 +32,10 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
     status must_== 200
   }
 
-  def postBody(hetu: String) = <samlp:AttributeQuery
+  def postBody(msgId: String, hetu: String) = <samlp:AttributeQuery
     xmlns:saml="urn:oasis:names:tc:SAML:2.0:assertion"
     xmlns:samlp="urn:oasis:names:tc:SAML:2.0:protocol"
-    ID="aaf23196-1773-2113-474a-fe114412ab72"
+    ID={ msgId }
     Version="2.0"
     IssueInstant="2006-07-17T20:31:40">
       <saml:Issuer Format="urn:oasis:names:tc:SAML:1.1:nameid-format:X509SubjectName">
@@ -80,30 +87,57 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is =
     bad must_== None
   }
 
-  def hetu = post("/hetuToOid", postBody("010969-929N")) {
+  def hetu = post("/hetuToOid", postBody("aaf23196-1773-2113-474a-fe114412ab72", "010969-929N")) {
     val msg: Elem = XML.loadString(response.body)
     (status, getOid(msg), getName(msg)) must_== (200, "1.2.246.562.24.99178889818", "Perus Pingviini")
 
   }
 
-  def hetu2 = post("/hetuToOid", postBody("010101-123N")) {
+  def hetu2 = post("/hetuToOid", postBody("aaf23196-1773-2113-474a-fe114412ab72", "010101-123N")) {
     val msg: Elem = XML.loadString(response.body)
     (status, getOid(msg), getName(msg)) must_== (200, "1.2.246.562.24.14229104472", "Teppo Testaaja")
   }
 
-  def nonExistingHetu = post("/hetuToOid", postBody("111111-123N")) {
+  def nonExistingHetu = post("/hetuToOid", postBody("aaf23196-1773-2113-474a-fe114412ab72", "111111-123N")) {
     val msg: Elem = XML.loadString(response.body)
     (msg \\ "Status" \ "StatusCode" \ "@Value").text must_== "urn:oasis:names:tc:SAML:2.0:status:Responder"
   }
 
-  def hetuMissingFromRequest = post("/hetuToOid", <foo></foo>.toString.getBytes) {
+  def hetuMissingFromRequest = post("/hetuToOid", postBody("", "111111-123N")) {
     val msg: Elem = XML.loadString(response.body)
     (msg \\ "Status" \ "StatusCode" \ "@Value").text must_== "urn:oasis:names:tc:SAML:2.0:status:Requester"
   }
 
-  def emptyRequest = post("/hetuToOid", " ".getBytes) {
+  def idMissingFromRequest = post("/hetuToOid", postBody("aaf23196-1773-2113-474a-fe114412ab72", "")) {
+    val msg: Elem = XML.loadString(response.body)
+    (msg \\ "Status" \ "StatusCode" \ "@Value").text must_== "urn:oasis:names:tc:SAML:2.0:status:Requester"
+  }
+
+  def hetuAndIdMissingFromRequest = post("/hetuToOid", postBody("", "")) {
+    val msg: Elem = XML.loadString(response.body)
+    (msg \\ "Status" \ "StatusCode" \ "@Value").text must_== "urn:oasis:names:tc:SAML:2.0:status:Requester"
+  }
+
+  def emptyRequest = post("/hetuToOid", "".getBytes) {
     val msg: Elem = XML.loadString(response.body)
     (status, (msg \\ "Fault" \ "faultcode").text) must_== (500, "soap11:Client")
+  }
+
+  def properIssuerUrl = post("/hetuToOid", postBody("aaf23196-1773-2113-474a-fe114412ab72", "111111-123N")) {
+    val msg: Elem = XML.loadString(response.body)
+    (msg \\ "Issuer").text must_== config.saml2IssuerUrl
+  }
+
+  def properIssueInstant = post("/hetuToOid", postBody("aaf23196-1773-2113-474a-fe114412ab72", "010101-123N")) {
+    val msg: Elem = XML.loadString(response.body)
+    val parser = ISODateTimeFormat.dateTimeNoMillis.withZoneUTC
+    parser.parseDateTime((msg \\ "Response" \ "@IssueInstant").text.trim).isAfterNow must_!= true
+  }
+
+  def properNotOnOrAfter = post("/hetuToOid", postBody("aaf23196-1773-2113-474a-fe114412ab72", "010101-123N")) {
+    val msg: Elem = XML.loadString(response.body)
+    val parser = ISODateTimeFormat.dateTimeNoMillis.withZoneUTC
+    parser.parseDateTime((msg \\ "SubjectConfirmationData" \ "@NotOnOrAfter").text.trim).isAfterNow must_== true
   }
 
   def getVersion(buildinfo: String): String = {
