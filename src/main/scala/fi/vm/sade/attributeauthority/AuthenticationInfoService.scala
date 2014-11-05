@@ -1,6 +1,7 @@
 package fi.vm.sade.attributeauthority
 
 import com.fasterxml.jackson.core.JsonParseException
+import fi.vm.sade.attributeauthority.util.Logging
 import org.json4s
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -38,7 +39,7 @@ class MockAuthenticationInfoService extends AuthenticationInfoService {
   }
 }
 
-class RemoteAuthenticationInfoService(config: RemoteApplicationConfig) extends AuthenticationInfoService {
+class RemoteAuthenticationInfoService(config: RemoteApplicationConfig) extends AuthenticationInfoService with Logging {
 
   def getHenkiloByHetu(hetu: String): Option[UserInfo] = {
     CASClient(DefaultHttpClient).getServiceTicket(config) match {
@@ -54,7 +55,10 @@ class RemoteAuthenticationInfoService(config: RemoteApplicationConfig) extends A
 
     responseCode match {
       case 200 => UserInfo.fromJson(resultString)
-      case _ => None
+      case _ => {
+        logger.warn("unexpected response code " + responseCode + " from " + config.henkilohallintaUrl)
+        None
+      }
     }
   }
 }

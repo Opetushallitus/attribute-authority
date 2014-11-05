@@ -115,21 +115,38 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
     </SOAP-ENV:Envelope>
   }
 
+  private def clientAddress = " [" + request.getRemoteAddr + "]"
+
   post("/hetuToOid", operation(postOidSwagger)) {
     try {
       val msg = XML.loadString(request.body)
       (getHetu(msg), getMsgId(msg)) match {
         case (Some(hetu), Some(msgid)) => appConfig.authenticationInfoService.getHenkiloByHetu(hetu) match {
           case Some(user) => samlResponse(user, msgid)
-          case _ => samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Responder", "No user found by hetu")
+          case _ => {
+            logger.info("no oid found for given hetu" + clientAddress)
+            samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Responder", "No user found by hetu")
+          }
         }
-        case (None, Some(msgid)) => samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Requester", "No hetu found in request")
-        case (Some(hetu), None) => samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Requester", "No message id found in request")
-        case (None, None) => samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Requester", "Neither message id nor hetu found in request")
+        case (None, Some(msgid)) => {
+          logger.info("hetu missing from request" + clientAddress)
+          samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Requester", "No hetu found in request")
+        }
+        case (Some(hetu), None) => {
+          logger.info("message id missing from request" + clientAddress)
+          samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Requester", "No message id found in request")
+        }
+        case (None, None) => {
+          logger.info("message id and hetu missing from request" + clientAddress)
+          samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Requester", "Neither message id nor hetu found in request")
+        }
       }
     }
     catch {
-      case e: SAXParseException => halt(status = 500, body = soapFaultMessage("soap11:Client", "Invalid message format"))
+      case e: SAXParseException => {
+        logger.info("invalid soap message" + clientAddress)
+        halt(status = 500, body = soapFaultMessage("soap11:Client", "Invalid message format"))
+      }
       case e: Exception => halt(status = 500, body = soapFaultMessage("soap11:Server", "Internal error"))
     }
   }

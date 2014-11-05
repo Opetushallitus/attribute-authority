@@ -1,17 +1,17 @@
 <configuration>
-  <appender name="FILE" class="ch.qos.logback.core.RollingFileAppender">
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <encoder>
       <pattern>%d{ISO8601} %-5p [%t] %-5p %c: %m%n</pattern>
     </encoder>
-    <file>${USER_HOME}/tomcat/logs/attribute-authority.log</file>
+    <file>${HOME}/tomcat/logs/attribute-authority.log</file>
     <append>true</append>
      <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
        <fileNamePattern>attribute-authority.log.%i</fileNamePattern>
         <minIndex>0</minIndex>
-        <maxIndex>20</maxIndex>
+        <maxIndex>12</maxIndex>
       </rollingPolicy>
       <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-        <maxFileSize>20MB</maxFileSize>
+        <maxFileSize>10MB</maxFileSize>
       </triggeringPolicy>
   </appender>
 
