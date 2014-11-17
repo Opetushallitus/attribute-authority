@@ -14,7 +14,7 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is = br ^
   "should return proper SAML message for misssing hetu"                 ! nonExistingHetu ^ br ^
   "should return proper SAML message if no hetu in request"             ! hetuMissingFromRequest ^ br ^
   "should return proper SAML message if no id in request"               ! idMissingFromRequest ^ br ^
-  "should return proper SAML message if neither heto nor id in request" ! idMissingFromRequest ^ br ^
+  "should return proper SAML message if neither hetu nor id in request" ! idMissingFromRequest ^ br ^
   "should return proper SAML message for empty request"                 ! emptyRequest ^ br ^
   "SAML message has proper Issuer URL"                                  ! properIssuerUrl ^ br ^
   "SAML message has proper IssueInstant"                                ! properIssueInstant ^ br ^
