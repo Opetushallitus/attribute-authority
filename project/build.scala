@@ -29,13 +29,13 @@ object AttributeAuthorityBuild extends Build {
       buildInfoPackage := "fi.vm.sade.attributeauthority",
       libraryDependencies ++= Seq(
         "org.scalatra" %% "scalatra" % ScalatraVersion,
-        //"org.scalatra" %% "scalatra-scalate" % ScalatraVersion,
         "org.scalatra" %% "scalatra-swagger" % ScalatraVersion,
         "org.json4s" %% "json4s-jackson" % "3.2.10",
         "org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
         "com.typesafe" % "config" % "1.2.1",
         "org.scalaj" %% "scalaj-http" % "0.3.15",
-        "ch.qos.logback" % "logback-classic" % "1.0.6" % "runtime",
+        "org.slf4j" % "slf4j-log4j12" % "1.7.7",
+        "log4j" % "log4j" % "1.2.17",
         "org.eclipse.jetty" % "jetty-webapp" % "9.1.3.v20140225" % "container",
         "org.eclipse.jetty" % "jetty-plus" % "9.1.3.v20140225" % "container",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
@@ -50,19 +50,7 @@ object AttributeAuthorityBuild extends Build {
       },
       artifactPath in (Compile, packageWar) ~= { defaultPath =>
         file("target") / defaultPath.getName
-      }/*,
-      scalateTemplateConfig in Compile <<= (sourceDirectory in Compile){ base =>
-        Seq(
-          TemplateConfig(
-            base / "webapp" / "WEB-INF" / "templates",
-            Seq.empty,  /* default imports should be added here */
-            Seq(
-              Binding("context", "_root_.org.scalatra.scalate.ScalatraRenderContext", importMembers = true, isImplicit = true)
-            ),  /* add extra bindings here */
-            Some("templates")
-          )
-        )
-      }*/
+      }
     )
   )
 }
