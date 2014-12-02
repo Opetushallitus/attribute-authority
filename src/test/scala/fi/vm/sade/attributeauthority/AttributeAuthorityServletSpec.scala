@@ -124,7 +124,7 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is = br ^
 
   def properIssuerUrl = post("/hetuToOid", postBody("aaf23196-1773-2113-474a-fe114412ab72", "111111-123N")) {
     val msg: Elem = XML.loadString(response.body)
-    (msg \\ "Issuer").text must_== config.saml2IssuerUrl
+    (msg \\ "Response" \ "Issuer").text must_== config.saml2IssuerUrl
   }
 
   def properIssueInstant = post("/hetuToOid", postBody("aaf23196-1773-2113-474a-fe114412ab72", "010101-123N")) {

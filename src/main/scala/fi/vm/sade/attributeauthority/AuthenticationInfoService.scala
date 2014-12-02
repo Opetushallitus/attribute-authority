@@ -34,7 +34,7 @@ class MockAuthenticationInfoService extends AuthenticationInfoService {
   def getHenkiloByHetu(hetu: String): (Boolean, Option[UserInfo]) = {
     TestFixture.persons.get(hetu) match {
       case Some(user) => (true, UserInfo.fromJson(user))
-      case _ => (false, None)
+      case _ => (true, None)
     }
   }
 }
