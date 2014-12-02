@@ -99,7 +99,7 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is = br ^
 
   def nonExistingHetu = post("/hetuToOid", postBody("aaf23196-1773-2113-474a-fe114412ab72", "111111-123N")) {
     val msg: Elem = XML.loadString(response.body)
-    (msg \\ "Assertion" \ "AttributeStatement" \ "Attribute" \ "AttributeValue").text.trim must_== "https://virkailija.opintopolku.fi/authentication-service/henkilo/NOT_FOUND"
+    (msg \\ "Assertion" \ "AttributeStatement" \ "Attribute" \ "AttributeValue").text must_== "https://virkailija.opintopolku.fi/authentication-service/henkilo/NOT_FOUND"
   }
 
   def hetuMissingFromRequest = post("/hetuToOid", postBody("", "111111-123N")) {
