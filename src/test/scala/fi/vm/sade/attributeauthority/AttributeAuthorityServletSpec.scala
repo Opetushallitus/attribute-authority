@@ -90,7 +90,6 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is = br ^
   def hetu = post("/hetuToOid", postBody("aaf23196-1773-2113-474a-fe114412ab72", "010969-929N")) {
     val msg: Elem = XML.loadString(response.body)
     (status, getOid(msg), getName(msg)) must_== (200, "1.2.246.562.24.99178889818", "Perus Pingviini")
-
   }
 
   def hetu2 = post("/hetuToOid", postBody("aaf23196-1773-2113-474a-fe114412ab72", "010101-123N")) {
@@ -100,7 +99,7 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport { def is = br ^
 
   def nonExistingHetu = post("/hetuToOid", postBody("aaf23196-1773-2113-474a-fe114412ab72", "111111-123N")) {
     val msg: Elem = XML.loadString(response.body)
-    (msg \\ "Status" \ "StatusCode" \ "@Value").text must_== "urn:oasis:names:tc:SAML:2.0:status:Responder"
+    (msg \\ "Assertion" \ "AttributeStatement" \ "Attribute" \ "AttributeValue").text.trim must_== "https://virkailija.opintopolku.fi/authentication-service/henkilo/NOT_FOUND"
   }
 
   def hetuMissingFromRequest = post("/hetuToOid", postBody("", "111111-123N")) {

@@ -31,38 +31,39 @@ object UserInfo {
 }
 
 class MockAuthenticationInfoService extends AuthenticationInfoService {
-  def getHenkiloByHetu(hetu: String): Option[UserInfo] = {
+  def getHenkiloByHetu(hetu: String): (Boolean, Option[UserInfo]) = {
     TestFixture.persons.get(hetu) match {
-      case Some(user) => UserInfo.fromJson(user)
-      case _ => None
+      case Some(user) => (true, UserInfo.fromJson(user))
+      case _ => (false, None)
     }
   }
 }
 
 class RemoteAuthenticationInfoService(config: RemoteApplicationConfig) extends AuthenticationInfoService with Logging {
 
-  def getHenkiloByHetu(hetu: String): Option[UserInfo] = {
+  def getHenkiloByHetu(hetu: String): (Boolean, Option[UserInfo]) = {
     CASClient(DefaultHttpClient).getServiceTicket(config) match {
-      case None => None
+      case None => (false, None)
       case Some(ticket) => getHenkilo(hetu, ticket)
     }
   }
 
-  private def getHenkilo(hetu: String, serviceTicket: String): Option[UserInfo] = {
+  private def getHenkilo(hetu: String, serviceTicket: String): (Boolean, Option[UserInfo]) = {
     val (responseCode, headersMap, resultString) = DefaultHttpClient.httpGet(config.henkilohallintaUrl + "/" + hetu)
       .param("ticket", serviceTicket)
       .responseWithHeaders
 
     responseCode match {
-      case 200 => UserInfo.fromJson(resultString)
+      case 200 => (true, UserInfo.fromJson(resultString))
+      case 404 => (true, None)
       case _ => {
         logger.warn("unexpected response code " + responseCode + " from " + config.henkilohallintaUrl)
-        None
+        (false, None)
       }
     }
   }
 }
 
 trait AuthenticationInfoService {
-  def getHenkiloByHetu(hetu: String): Option[UserInfo]
+  def getHenkiloByHetu(hetu: String): (Boolean, Option[UserInfo])
 }

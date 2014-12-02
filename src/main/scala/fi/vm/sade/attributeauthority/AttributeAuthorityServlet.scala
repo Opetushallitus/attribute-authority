@@ -45,7 +45,7 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
     DateTime.now.withDurationAdded(secondsToAdd, 1000).toString(fmt)
   }
 
-  private def samlResponse(user: UserInfo, rid: String): Elem = {
+  private def samlResponse(attrStmt: Elem, rid: String) = {
     withErrorLogging {
       val uuid1 = newUUID
       val uuid2 = newUUID
@@ -70,19 +70,39 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
                   <saml2:SubjectConfirmationData Address="178.217.129.16" InResponseTo={ rid } NotOnOrAfter={ futureTime }/>
                 </saml2:SubjectConfirmation>
               </saml2:Subject>
-              <saml2:AttributeStatement>
-                <saml2:Attribute FriendlyName="oid" Name="urn:oid:2.16.840.1.113730.3.1.241" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
-                  <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">{ user.name }</saml2:AttributeValue>
-                </saml2:Attribute>
-                <saml2:Attribute FriendlyName="oid" Name="urn:oid:2.5.4.10" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
-                  <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">{ user.oid }</saml2:AttributeValue>
-                </saml2:Attribute>
-              </saml2:AttributeStatement>
+              {attrStmt}
             </saml2:Assertion>
           </saml2p:Response>
         </soap11:Body>
       </soap11:Envelope>
     }("Creating SAML2 response failed")
+  }
+
+  private def samlFoundResponse(user: UserInfo, rid: String): Elem = {
+    samlResponse(
+      <saml2:AttributeStatement>
+        <saml2:Attribute FriendlyName="uid" Name="urn:oid:2.16.840.1.113730.3.1.241" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+          <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">{ user.name }</saml2:AttributeValue>
+        </saml2:Attribute>
+        <saml2:Attribute FriendlyName="oid" Name="urn:oid:2.5.4.10" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+          <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">{ user.oid }</saml2:AttributeValue>
+        </saml2:Attribute>
+      </saml2:AttributeStatement>,
+      rid
+    )
+  }
+
+  private def samlNotFoundResponse(rid: String) = {
+    samlResponse(
+      <saml2:AttributeStatement>
+        <saml2:Attribute FriendlyName="entitlement" Name="urn:oid:1.3.6.1.4.1.5923.1.1.1.7" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
+          <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">
+            https://virkailija.opintopolku.fi/authentication-service/henkilo/NOT_FOUND
+          </saml2:AttributeValue>
+        </saml2:Attribute>
+      </saml2:AttributeStatement>,
+      rid
+    )
   }
 
   private def samlErrorResponse(statusCode: String, statusMessage: String) = {
@@ -122,7 +142,8 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
       val msg = XML.loadString(request.body)
       (getHetu(msg), getMsgId(msg)) match {
         case (Some(hetu), Some(msgid)) => appConfig.authenticationInfoService.getHenkiloByHetu(hetu) match {
-          case Some(user) => samlResponse(user, msgid)
+          case (true, Some(user)) => samlFoundResponse(user, msgid)
+          case (true, None) => samlNotFoundResponse(msgid)
           case _ => {
             logger.info("no oid found for given hetu" + clientAddress)
             samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Responder", "No user found by hetu")
