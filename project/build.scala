@@ -14,6 +14,7 @@ object AttributeAuthorityBuild extends Build {
   val Version = "0.1.0-SNAPSHOT"
   val ScalaVersion = "2.11.1"
   val ScalatraVersion = "2.3.0"
+  val artifactory = "https://artifactory.oph.ware.fi/artifactory/"
 
   lazy val project = Project (
     "attribute-authority",
@@ -50,6 +51,13 @@ object AttributeAuthorityBuild extends Build {
       },
       artifactPath in (Compile, packageWar) ~= { defaultPath =>
         file("target") / defaultPath.getName
+      },
+      credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
+      publishTo := {
+        if (Version.trim.endsWith("SNAPSHOT"))
+          Some("snapshots" at artifactory + "/oph-sade-snapshot-local;build.timestamp=" + new java.util.Date().getTime)
+        else
+          Some("releases" at artifactory + "/oph-sade-release-local")
       }
     )
   )
