@@ -148,25 +148,28 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
           }
         }
         case (None, Some(msgid)) => {
-          logger.info("hetu missing from request" + clientAddress)
+          logger.warn("hetu missing from request" + clientAddress)
           samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Requester", "No hetu found in request")
         }
         case (Some(hetu), None) => {
-          logger.info("message id missing from request" + clientAddress)
+          logger.warn("message id missing from request" + clientAddress)
           samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Requester", "No message id found in request")
         }
         case (None, None) => {
-          logger.info("message id and hetu missing from request" + clientAddress)
+          logger.warn("message id and hetu missing from request" + clientAddress)
           samlErrorResponse("urn:oasis:names:tc:SAML:2.0:status:Requester", "Neither message id nor hetu found in request")
         }
       }
     }
     catch {
       case e: SAXParseException => {
-        logger.info("invalid soap message" + clientAddress)
+        logger.warn("invalid soap message" + clientAddress)
         halt(status = 500, body = soapFaultMessage("soap11:Client", "Invalid message format"))
       }
-      case e: Exception => halt(status = 500, body = soapFaultMessage("soap11:Server", "Internal error"))
+      case e: Exception => {
+        logger.error("internal error " + e.toString, e)
+        halt(status = 500, body = soapFaultMessage("soap11:Server", "Internal error"))
+      }
     }
   }
 
