@@ -49,7 +49,7 @@ class RemoteAuthenticationInfoService(config: RemoteApplicationConfig) extends A
   }
 
   private def getHenkilo(hetu: String, serviceTicket: String): (Boolean, Option[UserInfo]) = {
-    val (responseCode, headersMap, resultString) = DefaultHttpClient.httpGet(config.henkilohallintaUrl + "/" + hetu)
+    val (responseCode, headersMap, resultString) = DefaultHttpClient.httpGet(config.henkilohallintaUrl + hetu)
       .param("ticket", serviceTicket)
       .responseWithHeaders
 
