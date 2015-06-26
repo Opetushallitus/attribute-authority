@@ -1,11 +1,9 @@
-import sbt._
-import Keys._
-import org.scalatra.sbt._
-import org.scalatra.sbt.PluginKeys._
-import sbtbuildinfo.Plugin._
-import com.earldouglas.xsbtwebplugin.WebPlugin
-import com.earldouglas.xsbtwebplugin.WebPlugin.container
 import com.earldouglas.xsbtwebplugin.PluginKeys._
+import com.earldouglas.xsbtwebplugin.WebPlugin
+import org.scalatra.sbt._
+import sbt.Keys._
+import sbt._
+import sbtbuildinfo.Plugin._
 
 
 object AttributeAuthorityBuild extends Build {
@@ -37,6 +35,7 @@ object AttributeAuthorityBuild extends Build {
         "org.scalaj" %% "scalaj-http" % "0.3.15",
         "org.slf4j" % "slf4j-log4j12" % "1.7.7",
         "log4j" % "log4j" % "1.2.17",
+        "com.github.cb372" %% "scalacache-guava" % "0.6.3",
         "org.eclipse.jetty" % "jetty-webapp" % "9.1.3.v20140225" % "container",
         "org.eclipse.jetty" % "jetty-plus" % "9.1.3.v20140225" % "container",
         "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016" % "container;provided;test" artifacts (Artifact("javax.servlet", "jar", "jar"))
