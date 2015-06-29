@@ -65,7 +65,7 @@ class RemoteAuthenticationInfoService(config: RemoteApplicationConfig, client: H
           .responseWithHeaders()
         (responseCode, headersMap.get("Set-Cookie")) match {
           case (401, _) => retry(retryCount, Some(responseCode), headersMap)
-          case (200, Some(cookies)) if cookies.exists(_.startsWith("JSESSIONID")) => cookies.map(_.split(';').head)
+          case (_, Some(cookies)) if cookies.exists(_.startsWith("JSESSIONID")) => cookies.map(_.split(';').head)
           case (_, _) => retry(retryCount, Some(responseCode), headersMap)
         }
       case None => retry(retryCount, None, Map())
