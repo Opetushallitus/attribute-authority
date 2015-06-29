@@ -9,6 +9,7 @@ import scalacache._
 import guava._
 import memoization._
 import scala.concurrent.duration._
+import scalaj.http.HttpOptions
 
 case class UserInfo(oid: String, name: String)
 
@@ -43,15 +44,15 @@ class MockAuthenticationInfoService extends AuthenticationInfoService {
   }
 }
 
-case class CannotAuthenticateException(responseCode: Option[Int], headers: Map[String, List[String]])
+case class CannotAuthenticateException(responseCode: Option[Int], headers: Map[String, String])
   extends Exception(s"cannot authenticate, response code $responseCode, headers: $headers")
 
 class RemoteAuthenticationInfoService(config: RemoteApplicationConfig, client: HttpClient = DefaultHttpClient, ttl: Duration = 30.minutes) extends AuthenticationInfoService with Logging {
   implicit val scalaCache = ScalaCache(GuavaCache())
 
   private def getCookies(retryCount: Int = 0): List[String] = {
-    def retry(count: Int, responseCode: Option[Int], headers: Map[String, List[String]]): List[String] = {
-      if (count < 3) {
+    def retry(count: Int, responseCode: Option[Int], headers: Map[String, String]): List[String] = {
+      if (count < 2) {
         logger.warn(s"retrying getCookies, retry attempt #${count + 1}...")
         getCookies(count + 1)
       } else {
@@ -60,12 +61,13 @@ class RemoteAuthenticationInfoService(config: RemoteApplicationConfig, client: H
     }
     def getCookieHeaders = CASClient(client).getServiceTicket(config) match {
       case Some(ticket) =>
-        val (responseCode, headersMap, _) = client.httpGet(config.ticketConsumerUrl)
+        val (responseCode, headersMap, responseBody) = client.httpGet(config.ticketConsumerUrl, HttpOptions.followRedirects(false))
           .header("CasSecurityTicket", ticket)
           .responseWithHeaders()
+
         (responseCode, headersMap.get("Set-Cookie")) match {
           case (401, _) => retry(retryCount, Some(responseCode), headersMap)
-          case (_, Some(cookies)) if cookies.exists(_.startsWith("JSESSIONID")) => cookies.map(_.split(';').head)
+          case (_, Some(cookies)) if cookies.contains("JSESSIONID") => cookies.split(", ").map(_.split(';').head).toList
           case (_, _) => retry(retryCount, Some(responseCode), headersMap)
         }
       case None => retry(retryCount, None, Map())
@@ -78,20 +80,20 @@ class RemoteAuthenticationInfoService(config: RemoteApplicationConfig, client: H
     case false => memoize(ttl) { getCookies() }
   }
 
-  private def addHeaders(request: HttpRequest, newCookies: Boolean) {
-    request.header("Cookie", cachedOrNewCookies(newCookies).mkString("; "))
-    request.header("Caller-Id", "attribute-authority.attributeauthority.backend")
+  private def addHeaders(request: HttpRequest, newCookies: Boolean): HttpRequest = {
+    request
+      .header("Cookie", cachedOrNewCookies(newCookies).mkString("; "))
+      .header("Caller-Id", "attribute-authority.attributeauthority.backend")
   }
 
   def getHenkiloByHetu(hetu: String): (Boolean, Option[UserInfo]) = {
     def tryGet(hetu: String, newCookies: Boolean = false, retryCount: Int = 0): (Boolean, Option[UserInfo]) = {
-      val request: HttpRequest = client.httpGet(config.henkilohallintaUrl + hetu)
-      addHeaders(request, newCookies)
-      val (responseCode, _, resultString) = request.responseWithHeaders()
+      val request: HttpRequest = addHeaders(client.httpGet(config.henkilohallintaUrl + hetu), newCookies)
+      val (responseCode, headers, resultString) = request.responseWithHeaders()
 
       responseCode match {
         case 401 if retryCount < 2 =>
-          logger.info("session expired, trying to get a new one")
+          logger.warn("session expired earlier than expected, trying to get a new one")
           tryGet(hetu, newCookies = true, retryCount + 1)
         case 200 => (true, UserInfo.fromJson(resultString))
         case 404 => (true, None)

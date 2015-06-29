@@ -32,7 +32,7 @@ object AttributeAuthorityBuild extends Build {
         "org.json4s" %% "json4s-jackson" % "3.2.10",
         "org.scalatra" %% "scalatra-specs2" % ScalatraVersion % "test",
         "com.typesafe" % "config" % "1.2.1",
-        "org.scalaj" %% "scalaj-http" % "0.3.15",
+        "org.scalaj" %% "scalaj-http" % "1.1.4",
         "org.slf4j" % "slf4j-log4j12" % "1.7.7",
         "log4j" % "log4j" % "1.2.17",
         "com.github.cb372" %% "scalacache-guava" % "0.6.3",

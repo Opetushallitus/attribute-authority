@@ -6,6 +6,7 @@ import org.scalatra.test.specs2.ScalatraSpec
 import org.specs2.specification.Fragments
 
 import scala.concurrent.duration.Duration
+import scalaj.http.HttpOptions.HttpOption
 
 class RemoteAuthenticationInfoServiceSpec extends ScalatraSpec {
   override def is: Fragments = p ^
@@ -18,16 +19,16 @@ class RemoteAuthenticationInfoServiceSpec extends ScalatraSpec {
   def createMock() = new Mocks(
     Map(
       ("POST", "http://localhost/cas/v1/tickets") ->
-        MockResponse(201, Map("Location" -> List("http://localhost/cas/v1/tickets/TGT-63528-7e6K4Ft6YCbiiLFdjk7Y-cas.foo")), ""),
+        MockResponse(201, Map("Location" -> "http://localhost/cas/v1/tickets/TGT-63528-7e6K4Ft6YCbiiLFdjk7Y-cas.foo"), ""),
 
       ("POST", "http://localhost/cas/v1/tickets/TGT-63528-7e6K4Ft6YCbiiLFdjk7Y-cas.foo") ->
         MockResponse(200, Map(), "", Some("ST-63529-TQpkXpIE0YgGXFIwTHaj-cas.foo")),
 
       ("GET", "http://localhost/authentication-service/j_spring_cas_security_check") ->
-        MockResponse(200, Map("Set-Cookie" -> List("JSESSIONID=9C16A50F8E5DE52D03F237CB3500D3A8")), ""),
+        MockResponse(200, Map("Set-Cookie" -> "JSESSIONID=9C16A50F8E5DE52D03F237CB3500D3A8"), ""),
 
       ("GET", "http://localhost/authentication-service/resources/s2s/byHetu/111111-1975") ->
-        MockResponse(200, Map("Content-Type" -> List("application/json")), "{\"oidHenkilo\":\"oid\",\"kutsumanimi\":\"full\",\"sukunimi\":\"name\"}")
+        MockResponse(200, Map("Content-Type" -> "application/json"), "{\"oidHenkilo\":\"oid\",\"kutsumanimi\":\"full\",\"sukunimi\":\"name\"}")
     )
   )
 
@@ -83,11 +84,15 @@ class Mocks(mockedRequests: Map[(String, String), HttpRequest]) extends HttpClie
     incCount(url)
     mockedRequests("POST", url)
   }
+  override def httpGet(url: String, options: HttpOption*): HttpRequest = {
+    incCount(url)
+    mockedRequests(("GET", url))
+  }
 }
 
 
-case class MockResponse(responseCode: Int, headers: Map[String, List[String]], body: String, resp: Option[String] = None) extends HttpRequest {
-  override def responseWithHeaders(): (Int, Map[String, List[String]], String) = (responseCode, headers, body)
+case class MockResponse(responseCode: Int, headers: Map[String, String], body: String, resp: Option[String] = None) extends HttpRequest {
+  override def responseWithHeaders(): (Int, Map[String, String], String) = (responseCode, headers, body)
   override def header(key: String, value: String): HttpRequest = this
   override def param(key: String, value: String): HttpRequest = this
   override def response(): Option[String] = resp
