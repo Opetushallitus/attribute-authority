@@ -58,12 +58,13 @@ object AppConfig {
     override def casTicketUrl: String = stringFromProps("attributeauthority.cas_ticket_url", super.casTicketUrl)
     override def ticketConsumerUrl: String = stringFromProps("attributeauthority.cas_ticket_consumer_url", super.ticketConsumerUrl)
 
-    override def authenticationInfoService: AuthenticationInfoService = casTicketUrl match {
+    val authService = casTicketUrl match {
       case url if !url.isEmpty => new RemoteAuthenticationInfoService(RemoteApplicationConfig(
         url, henkilohallintaUsername, henkilohallintaPassword, henkilohallintaUrl, ticketConsumerUrl))
       case _ => super.authenticationInfoService
     }
 
+    override def authenticationInfoService: AuthenticationInfoService = authService
 
   }
 }

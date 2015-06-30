@@ -81,8 +81,10 @@ class RemoteAuthenticationInfoService(config: RemoteApplicationConfig, client: H
   }
 
   private def addHeaders(request: HttpRequest, newCookies: Boolean): HttpRequest = {
+    val cookies = cachedOrNewCookies(newCookies).mkString("; ")
+    logger.info(s"using cookies $cookies, newCookies: $newCookies")
     request
-      .header("Cookie", cachedOrNewCookies(newCookies).mkString("; "))
+      .header("Cookie", cookies)
       .header("Caller-Id", "attribute-authority.attributeauthority.backend")
   }
 
