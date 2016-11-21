@@ -1,13 +1,19 @@
 package fi.vm.sade.attributeauthority
 
 import java.io.File
+import java.nio.file.Paths
 
 import com.typesafe.config.{ConfigException, ConfigFactory}
+import fi.vm.sade.scalaproperties.OphProperties
 
 
 /**
  *
  */
+
+object UrlProperties extends OphProperties("/attributeauthority-oph.properties") {
+  addOptionalFiles(Paths.get(sys.props.getOrElse("user.home", ""), "/oph-configuration/common.properties").toString)
+}
 
 object AppConfig {
   def fromSystemProperty = {
@@ -47,16 +53,16 @@ object AppConfig {
       }
     }
 
-    override def saml2IssuerUrl: String = stringFromProps("attributeauthority.saml2_issuer_url", super.saml2IssuerUrl)
+    override def saml2IssuerUrl: String = UrlProperties.url("attributeauthority.saml2_issuer_url")
     override def saml2NameID: String = stringFromProps("attributeauthority.saml2_name_id", super.saml2NameID)
     override def saml2ResponseValidityTimeSeconds: Int = intFromProps("attributeauthority.saml2_response_validity_time_seconds", super.saml2ResponseValidityTimeSeconds)
     
-    override def henkilohallintaUrl: String = stringFromProps("attributeauthority.henkilohallinta_url", super.henkilohallintaUrl)
+    override def henkilohallintaUrl: String = UrlProperties.url("authentication-service.oidByHetu")
     override def henkilohallintaUsername: String = stringFromProps("attributeauthority.henkilohallinta_username", super.henkilohallintaUsername)
     override def henkilohallintaPassword: String = stringFromProps("attributeauthority.henkilohallinta_password", super.henkilohallintaPassword)
 
     override def casTicketUrl: String = stringFromProps("attributeauthority.cas_ticket_url", super.casTicketUrl)
-    override def ticketConsumerUrl: String = stringFromProps("attributeauthority.cas_ticket_consumer_url", super.ticketConsumerUrl)
+    override def ticketConsumerUrl: String = UrlProperties.url("authentication-service.cas.ticket_consumer_url")
 
     val authService = casTicketUrl match {
       case url if !url.isEmpty => new RemoteAuthenticationInfoService(RemoteApplicationConfig(
@@ -65,7 +71,6 @@ object AppConfig {
     }
 
     override def authenticationInfoService: AuthenticationInfoService = authService
-
   }
 }
 
