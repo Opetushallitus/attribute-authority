@@ -2,20 +2,12 @@ package fi.vm.sade.attributeauthority
 
 import java.util.concurrent.TimeUnit
 
-import org.scalatra.test.specs2.ScalatraSpec
-import org.specs2.specification.Fragments
+import org.scalatra.test.scalatest.ScalatraFunSuite
 
 import scala.concurrent.duration.Duration
 import scalaj.http.HttpOptions.HttpOption
 
-class RemoteAuthenticationInfoServiceSpec extends ScalatraSpec {
-  override def is: Fragments = p ^
-    "RemoteAuthenticationInfoService" ^ br ^
-    t ^ "getHenkiloByHetu should call henkilopalvelu using authentication cookies" ! getHenkiloByHetu ^ br ^
-    "should cache authentication cookies" ! cachedCookies ^ br ^
-    "getHenkiloByHetu should get a new session if the old one expires" ! newSession ^ br ^
-    end
-
+class RemoteAuthenticationInfoServiceSpec extends ScalatraFunSuite {
   def createMock() = new Mocks(
     Map(
       ("POST", "http://localhost/cas/v1/tickets") ->
@@ -40,32 +32,31 @@ class RemoteAuthenticationInfoServiceSpec extends ScalatraSpec {
     ticketConsumerUrl = "http://localhost/authentication-service/j_spring_cas_security_check"
   )
 
-
-  def getHenkiloByHetu = {
+  test("getHenkiloByHetu should call henkilopalvelu using authentication cookies") {
     val mock = createMock()
     val service = new RemoteAuthenticationInfoService(config, mock)
-    service.getHenkiloByHetu("111111-1975") must_== (true, Some(UserInfo("oid", "full name")))
+    service.getHenkiloByHetu("111111-1975") should equal (true, Some(UserInfo("oid", "full name")))
   }
 
-  def cachedCookies = {
+  test("should cache authentication cookies") {
     val mock = createMock()
     val service = new RemoteAuthenticationInfoService(config, mock)
     service.getHenkiloByHetu("111111-1975")
     service.getHenkiloByHetu("111111-1975")
-    mock.requests("http://localhost/cas/v1/tickets") must_== 1
-    mock.requests("http://localhost/cas/v1/tickets/TGT-63528-7e6K4Ft6YCbiiLFdjk7Y-cas.foo") must_== 1
-    mock.requests("http://localhost/authentication-service/resources/s2s/byHetu/111111-1975") must_== 2
+    mock.requests("http://localhost/cas/v1/tickets") should equal (1)
+    mock.requests("http://localhost/cas/v1/tickets/TGT-63528-7e6K4Ft6YCbiiLFdjk7Y-cas.foo") should equal(1)
+    mock.requests("http://localhost/authentication-service/resources/s2s/byHetu/111111-1975") should equal(2)
   }
 
-  def newSession = {
+  test("getHenkiloByHetu should get a new session if the old one expires") {
     val mock = createMock()
     val service = new RemoteAuthenticationInfoService(config, mock, ttl = Duration(100, TimeUnit.MILLISECONDS))
     service.getHenkiloByHetu("111111-1975")
     Thread.sleep(200)
     service.getHenkiloByHetu("111111-1975")
-    mock.requests("http://localhost/cas/v1/tickets") must_== 2
-    mock.requests("http://localhost/cas/v1/tickets/TGT-63528-7e6K4Ft6YCbiiLFdjk7Y-cas.foo") must_== 2
-    mock.requests("http://localhost/authentication-service/resources/s2s/byHetu/111111-1975") must_== 2
+    mock.requests("http://localhost/cas/v1/tickets") should equal(2)
+    mock.requests("http://localhost/cas/v1/tickets/TGT-63528-7e6K4Ft6YCbiiLFdjk7Y-cas.foo") should equal(2)
+    mock.requests("http://localhost/authentication-service/resources/s2s/byHetu/111111-1975") should equal(2)
   }
 
 }

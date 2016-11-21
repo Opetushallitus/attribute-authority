@@ -1,9 +1,9 @@
 package fi.vm.sade.attributeauthority
 
-import org.scalatra.test.specs2.ScalatraSpec
+import org.scalatra.test.scalatest.ScalatraFunSuite
 
 
-trait ScalatraTestSupport extends ScalatraSpec {
+trait ScalatraTestSupport extends ScalatraFunSuite {
   implicit val config: AppConfig = AppConfigSetup.create
   implicit val swagger = new AttributeAuthoritySwagger
 }
