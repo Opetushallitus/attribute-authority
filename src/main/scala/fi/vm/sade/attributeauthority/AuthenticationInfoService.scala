@@ -88,7 +88,8 @@ class RemoteAuthenticationInfoService(config: RemoteApplicationConfig, client: H
 
   def getHenkiloByHetu(hetu: String): (Boolean, Option[UserInfo]) = {
     def tryGet(hetu: String, newCookies: Boolean = false, retryCount: Int = 0): (Boolean, Option[UserInfo]) = {
-      val request: HttpRequest = addHeaders(client.httpGet(config.henkilohallintaUrl + hetu), newCookies)
+      val url: String = UrlProperties.url("authentication-service.oidByHetu", hetu)
+      val request: HttpRequest = addHeaders(client.httpGet(url), newCookies)
       val (responseCode, headers, resultString) = request.responseWithHeaders()
 
       responseCode match {
@@ -98,7 +99,7 @@ class RemoteAuthenticationInfoService(config: RemoteApplicationConfig, client: H
         case 200 => (true, UserInfo.fromJson(resultString))
         case 404 => (true, None)
         case _ => {
-          logger.warn("unexpected response code " + responseCode + " from " + config.henkilohallintaUrl)
+          logger.warn("unexpected response code " + responseCode + " from " + UrlProperties.url("authentication-service.oidByHetu", ""))
           (false, None)
         }
       }

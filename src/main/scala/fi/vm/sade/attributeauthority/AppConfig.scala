@@ -57,7 +57,6 @@ object AppConfig {
     override def saml2NameID: String = stringFromProps("attributeauthority.saml2_name_id", super.saml2NameID)
     override def saml2ResponseValidityTimeSeconds: Int = intFromProps("attributeauthority.saml2_response_validity_time_seconds", super.saml2ResponseValidityTimeSeconds)
     
-    override def henkilohallintaUrl: String = UrlProperties.url("authentication-service.oidByHetu")
     override def henkilohallintaUsername: String = stringFromProps("attributeauthority.henkilohallinta_username", super.henkilohallintaUsername)
     override def henkilohallintaPassword: String = stringFromProps("attributeauthority.henkilohallinta_password", super.henkilohallintaPassword)
 
@@ -66,7 +65,7 @@ object AppConfig {
 
     val authService = casTicketUrl match {
       case url if !url.isEmpty => new RemoteAuthenticationInfoService(RemoteApplicationConfig(
-        url, henkilohallintaUsername, henkilohallintaPassword, henkilohallintaUrl, ticketConsumerUrl))
+        url, henkilohallintaUsername, henkilohallintaPassword, ticketConsumerUrl))
       case _ => super.authenticationInfoService
     }
 
@@ -78,7 +77,6 @@ trait AppConfig {
   def saml2IssuerUrl: String = "https://localhost/oidresolver"
   def saml2NameID: String = "TestID"
   def saml2ResponseValidityTimeSeconds: Int = 3600
-  def henkilohallintaUrl: String = ""
   def henkilohallintaUsername: String = ""
   def henkilohallintaPassword: String = ""
   def casTicketUrl: String = ""
@@ -86,4 +84,4 @@ trait AppConfig {
   def authenticationInfoService: AuthenticationInfoService = new MockAuthenticationInfoService
 }
 
-case class RemoteApplicationConfig(casUrl: String, username: String, password: String, henkilohallintaUrl: String, ticketConsumerUrl: String)
+case class RemoteApplicationConfig(casUrl: String, username: String, password: String, ticketConsumerUrl: String)
