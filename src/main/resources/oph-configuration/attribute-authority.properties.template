@@ -1,8 +1,6 @@
-attributeauthority.saml2_issuer_url=https://{{host_virkailija}}/attributeauthority/hetuToOid
+host.virkailija={{host_virkailija}}
 attributeauthority.saml2_name_id=Oidresolver
 attributeauthority.saml2_response_validity_time_seconds=3600
-attributeauthority.henkilohallinta_url=https://{{host_virkailija}}/authentication-service/resources/s2s/oidByHetu/
 attributeauthority.henkilohallinta_username={{omatsivut_authentication_service_username}}
 attributeauthority.henkilohallinta_password={{omatsivut_authentication_service_password}}
 attributeauthority.cas_ticket_url={{omatsivut_cas_ticket_url}}
-attributeauthority.cas_ticket_consumer_url=https://{{host_virkailija}}/authentication-service/j_spring_cas_security_check
