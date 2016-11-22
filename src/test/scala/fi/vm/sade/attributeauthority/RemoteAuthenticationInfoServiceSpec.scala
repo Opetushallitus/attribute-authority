@@ -8,7 +8,7 @@ import scala.concurrent.duration.Duration
 import scalaj.http.HttpOptions.HttpOption
 
 class RemoteAuthenticationInfoServiceSpec extends ScalatraFunSuite {
-  UrlProperties.addOverride("baseUrl", "http://localhost")
+  UrlProperties.addOverride("baseUrl", "http://localhost").addOverride("host.virkailija", "localhost");
   def createMock() = new Mocks(
     Map(
       ("POST", "http://localhost/cas/v1/tickets") ->
