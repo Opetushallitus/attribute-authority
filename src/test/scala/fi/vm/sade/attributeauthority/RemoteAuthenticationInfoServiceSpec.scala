@@ -8,6 +8,7 @@ import scala.concurrent.duration.Duration
 import scalaj.http.HttpOptions.HttpOption
 
 class RemoteAuthenticationInfoServiceSpec extends ScalatraFunSuite {
+  UrlProperties.addOverride("baseUrl", "http://localhost")
   def createMock() = new Mocks(
     Map(
       ("POST", "http://localhost/cas/v1/tickets") ->
@@ -19,7 +20,7 @@ class RemoteAuthenticationInfoServiceSpec extends ScalatraFunSuite {
       ("GET", "http://localhost/authentication-service/j_spring_cas_security_check") ->
         MockResponse(200, Map("Set-Cookie" -> "JSESSIONID=9C16A50F8E5DE52D03F237CB3500D3A8"), ""),
 
-      ("GET", "http://localhost/authentication-service/resources/s2s/byHetu/111111-1975") ->
+      ("GET", "http://localhost/authentication-service/resources/s2s/oidByHetu/111111-1975") ->
         MockResponse(200, Map("Content-Type" -> "application/json"), "{\"oidHenkilo\":\"oid\",\"kutsumanimi\":\"full\",\"sukunimi\":\"name\"}")
     )
   )
@@ -28,7 +29,6 @@ class RemoteAuthenticationInfoServiceSpec extends ScalatraFunSuite {
     casUrl = "http://localhost/cas/v1/tickets",
     username = "foo",
     password = "bar",
-    henkilohallintaUrl = "http://localhost/authentication-service/resources/s2s/byHetu/",
     ticketConsumerUrl = "http://localhost/authentication-service/j_spring_cas_security_check"
   )
 
@@ -45,7 +45,7 @@ class RemoteAuthenticationInfoServiceSpec extends ScalatraFunSuite {
     service.getHenkiloByHetu("111111-1975")
     mock.requests("http://localhost/cas/v1/tickets") should equal (1)
     mock.requests("http://localhost/cas/v1/tickets/TGT-63528-7e6K4Ft6YCbiiLFdjk7Y-cas.foo") should equal(1)
-    mock.requests("http://localhost/authentication-service/resources/s2s/byHetu/111111-1975") should equal(2)
+    mock.requests("http://localhost/authentication-service/resources/s2s/oidByHetu/111111-1975") should equal(2)
   }
 
   test("getHenkiloByHetu should get a new session if the old one expires") {
@@ -56,7 +56,7 @@ class RemoteAuthenticationInfoServiceSpec extends ScalatraFunSuite {
     service.getHenkiloByHetu("111111-1975")
     mock.requests("http://localhost/cas/v1/tickets") should equal(2)
     mock.requests("http://localhost/cas/v1/tickets/TGT-63528-7e6K4Ft6YCbiiLFdjk7Y-cas.foo") should equal(2)
-    mock.requests("http://localhost/authentication-service/resources/s2s/byHetu/111111-1975") should equal(2)
+    mock.requests("http://localhost/authentication-service/resources/s2s/oidByHetu/111111-1975") should equal(2)
   }
 
 }
