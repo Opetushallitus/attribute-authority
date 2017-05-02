@@ -86,7 +86,7 @@ class AttributeAuthorityServletSpec extends ScalatraTestSupport {
   test("POST /hetuToOid should return proper SAML message for misssing hetu") {
     post("/hetuToOid", postBody("aaf23196-1773-2113-474a-fe114412ab72", "111111-123N")) {
       val msg: Elem = XML.loadString(response.body)
-      (msg \\ "Assertion" \ "AttributeStatement" \ "Attribute" \ "AttributeValue").text should equal ("https://virkailija.opintopolku.fi/authentication-service/henkilo/NOT_FOUND")
+      (msg \\ "Assertion" \ "AttributeStatement" \ "Attribute" \ "AttributeValue").text should equal ("https://virkailija.opintopolku.fi/oppijanumerorekisteri-service/henkilo/NOT_FOUND")
     }
   }
 

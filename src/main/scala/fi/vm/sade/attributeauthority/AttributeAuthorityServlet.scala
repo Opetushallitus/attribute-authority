@@ -96,7 +96,7 @@ class AttributeAuthorityServlet(implicit val appConfig: AppConfig, implicit val 
     samlResponse(
       <saml2:AttributeStatement>
         <saml2:Attribute FriendlyName="entitlement" Name="urn:oid:1.3.6.1.4.1.5923.1.1.1.7" NameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri">
-          <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">https://virkailija.opintopolku.fi/authentication-service/henkilo/NOT_FOUND</saml2:AttributeValue>
+          <saml2:AttributeValue xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="xs:string">https://virkailija.opintopolku.fi/oppijanumerorekisteri-service/henkilo/NOT_FOUND</saml2:AttributeValue>
         </saml2:Attribute>
       </saml2:AttributeStatement>,
       rid

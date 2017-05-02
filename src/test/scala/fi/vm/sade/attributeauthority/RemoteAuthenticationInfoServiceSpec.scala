@@ -17,10 +17,10 @@ class RemoteAuthenticationInfoServiceSpec extends ScalatraFunSuite {
       ("POST", "http://localhost/cas/v1/tickets/TGT-63528-7e6K4Ft6YCbiiLFdjk7Y-cas.foo") ->
         MockResponse(200, Map(), "", Some("ST-63529-TQpkXpIE0YgGXFIwTHaj-cas.foo")),
 
-      ("GET", "http://localhost/authentication-service/j_spring_cas_security_check") ->
+      ("GET", "http://localhost/oppijanumerorekisteri-service/j_spring_cas_security_check") ->
         MockResponse(200, Map("Set-Cookie" -> "JSESSIONID=9C16A50F8E5DE52D03F237CB3500D3A8"), ""),
 
-      ("GET", "http://localhost/authentication-service/resources/s2s/oidByHetu/111111-1975") ->
+      ("GET", "http://localhost/oppijanumerorekisteri-service/henkilo/henkiloPerusByHetu/111111-1975") ->
         MockResponse(200, Map("Content-Type" -> "application/json"), "{\"oidHenkilo\":\"oid\",\"kutsumanimi\":\"full\",\"sukunimi\":\"name\"}")
     )
   )
@@ -29,7 +29,7 @@ class RemoteAuthenticationInfoServiceSpec extends ScalatraFunSuite {
     casUrl = "http://localhost/cas/v1/tickets",
     username = "foo",
     password = "bar",
-    ticketConsumerUrl = "http://localhost/authentication-service/j_spring_cas_security_check"
+    ticketConsumerUrl = "http://localhost/oppijanumerorekisteri-service/j_spring_cas_security_check"
   )
 
   test("getHenkiloByHetu should call henkilopalvelu using authentication cookies") {
@@ -45,7 +45,7 @@ class RemoteAuthenticationInfoServiceSpec extends ScalatraFunSuite {
     service.getHenkiloByHetu("111111-1975")
     mock.requests("http://localhost/cas/v1/tickets") should equal (1)
     mock.requests("http://localhost/cas/v1/tickets/TGT-63528-7e6K4Ft6YCbiiLFdjk7Y-cas.foo") should equal(1)
-    mock.requests("http://localhost/authentication-service/resources/s2s/oidByHetu/111111-1975") should equal(2)
+    mock.requests("http://localhost/oppijanumerorekisteri-service/henkilo/henkiloPerusByHetu/111111-1975") should equal(2)
   }
 
   test("getHenkiloByHetu should get a new session if the old one expires") {
@@ -56,7 +56,7 @@ class RemoteAuthenticationInfoServiceSpec extends ScalatraFunSuite {
     service.getHenkiloByHetu("111111-1975")
     mock.requests("http://localhost/cas/v1/tickets") should equal(2)
     mock.requests("http://localhost/cas/v1/tickets/TGT-63528-7e6K4Ft6YCbiiLFdjk7Y-cas.foo") should equal(2)
-    mock.requests("http://localhost/authentication-service/resources/s2s/oidByHetu/111111-1975") should equal(2)
+    mock.requests("http://localhost/oppijanumerorekisteri-service/henkilo/henkiloPerusByHetu/111111-1975") should equal(2)
   }
 
 }
