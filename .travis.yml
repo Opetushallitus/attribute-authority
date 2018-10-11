@@ -1,0 +1,41 @@
+sudo: required
+
+language: scala
+
+jdk:
+- oraclejdk8
+
+services:
+- docker
+
+cache:
+  directories:
+  - $HOME/.m2
+
+env:
+  global:
+  # AWS_ACCESS_KEY_ID
+  - secure: "weFbqwpUk2TB4+phRhYKQM4JM2xwzJNWb+sSPdT5v6Tu71NLCwAVEwxU2FbajwtosY4RiHe/Ob1zsPMMyWxZpCDnoZO3YbwTEa+IbcD9cJm6M8OSZ8QYCapYhQTTH/Q1+RgpKwUT9bTpIddCdgqXtpfgshfm/B9p6Ek3LlT3NDA="
+  # AWS_SECRET_ACCESS_KEY
+  - secure: "vh+UbukTl7B/wjTkU0C/w+k+LbjvLiqWO08ec3Y0aR0TbwBTlRCi6VDvVE+KBserS6CDK6xScKZ+bI5+PYoG/6CwcQHYWEecHD6iq/wXUM19kNuv0vIT0bzTqICdb96h8XYZdb/GmzhC403TYLiJQDKC0aF+IDh23/ynp5iu4KM="
+
+install:
+- git clone https://github.com/Opetushallitus/ci-tools.git
+- source ci-tools/common/setup-tools.sh
+- export ARTIFACT_NAME="attribute-authority"
+
+script:
+- mvn clean package -B -Dbranch=${TRAVIS_BRANCH} -Drevision=${TRAVIS_COMMIT} -DbuildNumber=${TRAVIS_BUILD_NUMBER}
+
+- cp -v target/attributeauthority-*.war $DOCKER_BUILD_DIR/artifact/attributeauthority.war
+- cp -vr src/main/resources/oph-configuration $DOCKER_BUILD_DIR/config/
+
+- export BASE_IMAGE="base-legacy:0.1"
+- ./ci-tools/common/pull-image.sh
+- ./ci-tools/build/build-war.sh $ARTIFACT_NAME
+
+deploy:
+- provider: script
+  script: ./ci-tools/build/upload-image.sh $ARTIFACT_NAME
+  on:
+    all_branches: true
