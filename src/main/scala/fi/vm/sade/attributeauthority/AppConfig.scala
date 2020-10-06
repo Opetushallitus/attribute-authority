@@ -16,6 +16,9 @@ object UrlProperties extends OphProperties("/attributeauthority-oph.properties")
 }
 
 object AppConfig {
+
+  def callerId: String = "1.2.246.562.10.00000000001.attribute-authority"
+
   def fromSystemProperty = {
     val file = new File(System.getProperty("user.home") + "/oph-configuration/attribute-authority.properties")
     file.canRead match {

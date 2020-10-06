@@ -11,24 +11,25 @@ trait HttpClient {
 
 object DefaultHttpClient extends HttpClient {
   def httpGet(url: String) : HttpRequest = {
-    new DefaultHttpRequest(changeOptions(Http(url)))
+    new DefaultHttpRequest(modifyRequest(Http(url)))
   }
 
   def httpGet(url: String, options: HttpOption*): HttpRequest = {
-    new DefaultHttpRequest(changeOptions(Http(url)).options(options.toList))
+    new DefaultHttpRequest(modifyRequest(Http(url)).options(options.toList))
   }
 
   def httpPost(url: String, data: Option[String]) : HttpRequest = {
-    new DefaultHttpRequest(changeOptions(data match {
+    new DefaultHttpRequest(modifyRequest(data match {
       case None => Http(url).postForm
       case Some(data) => Http(url).postData(data)
     }))
   }
 
-  private def changeOptions(request: scalaj.http.HttpRequest): scalaj.http.HttpRequest = {
+  private def modifyRequest(request: scalaj.http.HttpRequest): scalaj.http.HttpRequest = {
     request
       .option(HttpOptions.connTimeout(5000))
       .option(HttpOptions.readTimeout(10000))
       .option(HttpOptions.followRedirects(true))
+      .header("Caller-id", AppConfig.callerId)
   }
 }
