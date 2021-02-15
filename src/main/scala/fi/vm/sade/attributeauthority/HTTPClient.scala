@@ -31,5 +31,6 @@ object DefaultHttpClient extends HttpClient {
       .option(HttpOptions.readTimeout(10000))
       .option(HttpOptions.followRedirects(true))
       .header("Caller-id", AppConfig.callerId)
+      .header("CSRF", AppConfig.callerId)
   }
 }
